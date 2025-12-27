@@ -1,0 +1,59 @@
+{
+  "164c1a92b8ce9cda0e2a8c13440b4722": [
+    {
+      "entity_id": "light.yeelink_cn_1162511951_mbulb3_s_2",
+      "friendly_name": "灯泡  灯",
+      "states": [
+        "开关状态",
+        "亮度",
+        "色温",
+        "颜色"
+      ],
+      "capabilities": [
+        "打开灯光",
+        "关闭灯光",
+        "切换灯光状态",
+        "调节亮度",
+        "设置色温"
+      ],
+      "entity_matching_clues": [
+        "light",
+        "yeelink_cn_1162511951_mbulb3_s_2",
+        "灯泡  灯",
+        "color_temp"
+      ],
+      "others": [
+        "HA集成：yeelink",
+        "supported_features：0",
+        "color_mode：color_temp",
+        "min_color_temp_kelvin：2700",
+        "max_color_temp_kelvin：6500"
+      ]
+    }
+  ],
+  "df406d66e297203b9cbccd7f7b2b0376": [
+    {
+      "entity_id": "switch.cuco_cn_269067598_cp1_on_p_2_1",
+      "friendly_name": "插座  开关 开关",
+      "states": [
+        "开关状态"
+      ],
+      "capabilities": [
+        "打开开关",
+        "关闭开关",
+        "切换开关状态"
+      ],
+      "entity_matching_clues": [
+        "插座  开关 开关",
+        "switch",
+        "cuco_cn_269067598_cp1_on_p_2_1"
+      ],
+      "others": [
+        "设备类型：switch",
+        "last_changed：2025-11-04T06:51:43.918528+00:00",
+        "last_reported：2025-11-04T06:51:43.918528+00:00",
+        "last_updated：2025-11-04T06:51:43.918528+00:00"
+      ]
+    }
+  ]
+}

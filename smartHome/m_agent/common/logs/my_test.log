@@ -1,0 +1,22 @@
+2025-12-25 13:45:46 - my_test - DEBUG - entity_log.py:141 - 解析得到HA EntityFact完整信息：
+{
+  "entity_id": "binary_sensor.isa_cn_blt_3_1md0u6qht0k00_dw2hl_contact_state_p_2_2",
+  "friendly_name": "门窗传感器",
+  "states": [
+    "开关状态",
+    "电量"
+  ],
+  "capabilities": [],
+  "entity_matching_clues": [
+    "门窗传感器",
+    "living_room",
+    "binary_sensor",
+    "接触状态"
+  ],
+  "others": [
+    "HA集成：isa",
+    "设备型号：ISA-CN-BLT-3",
+    "供电方式：纽扣电池"
+  ]
+}
+2025-12-25 13:45:46 - my_test - INFO - entity_log.py:150 - HA实体核心信息：{'entity_id': 'binary_sensor.isa_cn_blt_3_1md0u6qht0k00_dw2hl_contact_state_p_2_2', 'friendly_name': '门窗传感器', 'main_state': '开关状态', 'capabilities_count': 0}

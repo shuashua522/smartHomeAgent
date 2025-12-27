@@ -1,0 +1,80 @@
+{
+    "version": 1,
+    "minor_version": 12,
+    "key": "core.device_registry",
+    "data": {
+        "devices": [
+            {
+                "area_id": "3108946409de_jia_ke_ting",
+                "config_entries": [
+                    "01K7XSWSYQ9DG0S1026TAH12TV"
+                ],
+                "config_entries_subentries": {
+                    "01K7XSWSYQ9DG0S1026TAH12TV": [
+                        null
+                    ]
+                },
+                "configuration_url": "https://home.mi.com/webapp/content/baike/product/index.html?model=yeelink.light.mbulb3",
+                "connections": [],
+                "created_at": "2025-10-19T08:38:07.866166+00:00",
+                "disabled_by": null,
+                "entry_type": null,
+                "hw_version": null,
+                "id": "164c1a92b8ce9cda0e2a8c13440b4722",
+                "identifiers": [
+                    [
+                        "xiaomi_home",
+                        "cn_1162511951"
+                    ]
+                ],
+                "labels": [],
+                "manufacturer": "Yeelight",
+                "model": "yeelink.light.mbulb3",
+                "model_id": null,
+                "modified_at": "2025-11-04T08:17:31.420656+00:00",
+                "name_by_user": "客厅的灯泡",
+                "name": "灯泡",
+                "primary_config_entry": "01K7XSWSYQ9DG0S1026TAH12TV",
+                "serial_number": null,
+                "sw_version": "1.4.4_0031",
+                "via_device_id": null
+            },
+            {
+                "area_id": "3108946409de_jia_ke_ting",
+                "config_entries": [
+                    "01K7XSWSYQ9DG0S1026TAH12TV"
+                ],
+                "config_entries_subentries": {
+                    "01K7XSWSYQ9DG0S1026TAH12TV": [
+                        null
+                    ]
+                },
+                "configuration_url": "https://home.mi.com/webapp/content/baike/product/index.html?model=cuco.plug.cp1",
+                "connections": [],
+                "created_at": "2025-10-19T08:38:07.883830+00:00",
+                "disabled_by": null,
+                "entry_type": null,
+                "hw_version": null,
+                "id": "df406d66e297203b9cbccd7f7b2b0376",
+                "identifiers": [
+                    [
+                        "xiaomi_home",
+                        "cn_269067598"
+                    ]
+                ],
+                "labels": [],
+                "manufacturer": "Gosund",
+                "model": "cuco.plug.cp1",
+                "model_id": null,
+                "modified_at": "2025-10-19T08:38:07.883855+00:00",
+                "name_by_user": null,
+                "name": "插座",
+                "primary_config_entry": "01K7XSWSYQ9DG0S1026TAH12TV",
+                "serial_number": null,
+                "sw_version": "2.0.1_0011",
+                "via_device_id": null
+            }
+        ],
+        "deleted_devices": []
+    }
+}
