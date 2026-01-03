@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid
 from typing import List, Optional
 
 from langchain.agents import create_agent
@@ -9,6 +10,9 @@ import json
 from smartHome.m_agent.common.get_llm import get_llm
 from smartHome.m_agent.common.global_config import GLOBALCONFIG
 from smartHome.m_agent.memory.device_info import DEVICEINFO
+from smartHome.m_agent.memory.vector_device import VECTORDB, TextWithMeta, search_topK_device_by_clues, add, delete, \
+    update
+from langchain.tools import tool
 
 class EntityFact(BaseModel):
     """
@@ -259,6 +263,7 @@ class SmartHomeMemory():
 
         self.entities_fact_save_path="./temp_output/entities_fact.json"
         self.device_fact_save_path="./temp_output/device_fact.json"
+        self.vector_db=VECTORDB
 
     def init_memory_for_device(self):
         llm = get_llm()
@@ -307,8 +312,9 @@ class SmartHomeMemory():
                 )
             device_fact_dict[device_id]=device_fact
 
+        self.device_fact = device_fact_dict
+        self._save_init_device_fact_to_vector_db()
         self._save_init_device_fact_to_json(device_fact_dict,self.device_fact_save_path)
-        self.device_fact=device_fact_dict
 
     def init_memory_for_entity(self):
         """
@@ -386,6 +392,52 @@ class SmartHomeMemory():
         )
         self.entities_fact=init_fact
 
+    def _save_init_device_fact_to_vector_db(self):
+        """
+        修正版：将DeviceFact实例的点语法访问替代字典下标访问，解决TypeError
+        """
+        # 步骤1：定义「字段名」与「对应布尔标识」的映射表（保持不变）
+        field_boolean_mapping = [
+            ("states", {"states": True}),
+            ("capabilities", {"capabilities": True}),
+            ("device_id_clues", {"device_id_clues": True}),
+            ("usage_habits", {"usage_habits": True}),
+            ("others", {"others": True})
+        ]
+
+        # 步骤2：遍历所有设备Fact（value是DeviceFact实例）
+        for device_id, device_fact in self.device_fact.items():
+            # 跳过无效设备ID或非DeviceFact实例
+            if not device_id or not isinstance(device_fact, DeviceFact):
+                print(f"⚠️  无效设备ID「{device_id}」或非DeviceFact实例，跳过入库")
+                continue
+
+            # 步骤3：获取/创建设备专属集合（点语法访问DeviceFact属性）
+            device_name = device_fact.device_name or "N/A"  # 替代 device_fact["device_name"]
+            collection = self.vector_db.get_or_create_collection(device_id, device_name)
+
+            # 步骤4：遍历映射表，统一处理所有字段（点语法访问列表属性）
+            for field_name, boolean_kwargs in field_boolean_mapping:
+                # 用getattr获取DeviceFact的列表属性（替代 device_fact[field_name]）
+                content_list = getattr(device_fact, field_name, [])
+                if not isinstance(content_list, list) or not content_list:
+                    continue
+
+                # 步骤5：遍历内容列表，创建TextWithMeta并入库（保持不变）
+                for content in content_list:
+                    # 生成唯一text_id
+                    text_id = uuid.uuid4().hex
+
+                    # 实例化TextWithMeta（强转content为字符串，避免报错）
+                    text_with_meta = TextWithMeta(
+                        text_id=text_id,
+                        content=str(content),
+                        **boolean_kwargs
+                    )
+
+                    # 入库
+                    self.vector_db.add_text_to_vector_db(text_with_meta, collection)
+
     def _save_init_device_fact_to_json(self, init_fact: dict, save_path: str):
         try:
             # 步骤1：确保目标目录存在（不存在则创建）
@@ -455,28 +507,6 @@ class SmartHomeMemory():
             print(f"保存init_fact到JSON失败：{e}", file=sys.stderr)
             raise  # 可选：抛出异常让上层处理，根据业务需求调整
 
-    def select_most_appropriate_device_from_descr_AND_deviceList(self,description: str, devices: List[str]) :
-        """从描述信息和设备id列表中选择一个最恰当的设备
-        返回设备ID和理由
-        """
-        # 匹配逻辑（如关键词匹配、相似度计算等）
-        pass
-
-    def select_most_appropriate_device_from_descr(self,description: str) :
-        """从描述信息中选择一个最恰当的设备
-        返回设备ID和理由
-        """
-        # 匹配逻辑（如关键词匹配、相似度计算等）
-        pass
-
-    def select_devices_from_descr(self,description: str) :
-        """
-        从描述信息中选择符合的设备列表，并说明原因
-        :param description:
-        :return:
-        """
-        pass
-
     def extract(self,dialogue_record:str):
         """
         通过当前对话，和最近几条对话，提取事实性信息，
@@ -495,6 +525,20 @@ class SmartHomeMemory():
         # 客服：您还有其他智能家居设备的使用习惯吗？
         # 用户：卧室的空调我每天早上7点打开，调26℃，能调风速和定时；厨房的插座是智能的，能远程开关，我一般叫它厨房智能插座。
         # """
+        prompt="""
+        根据当前对话和近期的历史对话，分析是否有新增/过时/修改的事实信息，如果有：
+        1. 调用工具获取到该设备ID
+        2. 调用add/delete/update工具对记忆库中的信息进行处理
+        """
+
+        agent = create_agent(model=get_llm(),
+                             tools=[search_topK_device_by_clues, add, delete,update], )
+        result = agent.invoke({
+            "messages": [
+                {"role": "system", "content": "广州天气怎么样"},
+            ]
+        })
+
         result = agent.invoke({
             "messages": [
                 {
@@ -515,6 +559,7 @@ class SmartHomeMemory():
         # 解析并输出多个设备的提取结果（核心修改）
         device_fact_list_result = result["structured_response"]
         return device_fact_list_result
+
     def update(self,device_fact_list:str):
         """
 
@@ -535,20 +580,31 @@ class SmartHomeMemory():
             updated_device_fact=None
             self.device_fact["device_id"]=updated_device_fact
 
-    def _retrieve_topk_similar_devices(self,device_fact:DeviceFact,weight:list):
-        """
 
-        :param device_fact:
-        :param weight:
-        :return:
-        """
-        pass
 
 SMARTHOMEMEMORY=SmartHomeMemory()
+
+@tool
+def get_device_all_entities_states(device_id: str):
+    """
+    获取:设备ID下的所有实体各自可以获取到的状态
+    :param device_id: 设备ID
+    :return:
+    """
+    pass
+
+@tool
+def get_device_all_entities_capabilities(device_id: str):
+    """
+    获取:设备ID下的所有实体各自的能力
+    :param device_id: 设备ID
+    :return:
+    """
+    pass
 
 if __name__ == "__main__":
     # SmartHomeMemory().init_memory_by_deviceInfo()
     SmartHomeMemory().init_memory_for_entity()
-    # SmartHomeMemory().init_memory_for_device()
-
+    SmartHomeMemory().init_memory_for_device()
+    VECTORDB.print_all_collections_content()
     pass

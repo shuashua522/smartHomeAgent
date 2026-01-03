@@ -14,20 +14,19 @@
         "关闭灯光",
         "切换灯光状态",
         "调节亮度",
-        "设置色温"
+        "设置色温",
+        "设置颜色"
       ],
       "entity_matching_clues": [
+        "灯泡  灯",
         "light",
         "yeelink_cn_1162511951_mbulb3_s_2",
-        "灯泡  灯",
-        "color_temp"
+        "支持color_temp模式"
       ],
       "others": [
         "HA集成：yeelink",
-        "supported_features：0",
-        "color_mode：color_temp",
-        "min_color_temp_kelvin：2700",
-        "max_color_temp_kelvin：6500"
+        "设备型号：mbulb3",
+        "supported_features：0"
       ]
     }
   ],
@@ -50,6 +49,7 @@
       ],
       "others": [
         "设备类型：switch",
+        "状态：on",
         "last_changed：2025-11-04T06:51:43.918528+00:00",
         "last_reported：2025-11-04T06:51:43.918528+00:00",
         "last_updated：2025-11-04T06:51:43.918528+00:00"

@@ -154,6 +154,8 @@ dialogue_record_02 = """
 用户：打开床边的灯。
 客服：灯有两个，我不清楚哪个是床边的灯。灯列表：灯泡、台灯
 用户：台灯
+用户：插座上连着冰箱
+用户: 2号插座不要关闭
 """
 dialogue_record=dialogue_record_02
 
@@ -178,6 +180,8 @@ result = agent.invoke({
 # 解析并输出多个设备的提取结果（核心修改）
 device_fact_list_result = result["structured_response"]
 print("=== 提取的多个智能家居设备事实性信息 ===")
+devices_fact_str=device_fact_list_result.model_dump_json(indent=4)
+print(devices_fact_str)
 # 遍历每个设备的DeviceFact
 for idx, device_fact in enumerate(device_fact_list_result.device_facts, 1):
     print(f"\n【设备{idx}】")
