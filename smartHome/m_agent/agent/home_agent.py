@@ -11,12 +11,13 @@ import operator
 
 from smartHome.m_agent.agent.executor_agent import executor_planning
 from smartHome.m_agent.common.get_llm import get_llm
+from smartHome.m_agent.common.global_config import GLOBALCONFIG
 from smartHome.m_agent.memory.fact_memory import SMARTHOMEMEMORY
 
 from pydantic import BaseModel, Field
 from typing import List  # 推荐导入List，规范类型注解
 
-from smartHome.m_agent.memory.vector_device import get_device_constraints_individual_match_scores, \
+from smartHome.m_agent.memory.vector_device import get_device_constraints_individual_match_text, \
     get_device_all_states, get_device_all_capabilities, get_device_all_usage_habits
 
 
@@ -87,10 +88,9 @@ class EmailClassification(TypedDict):
 class SmartHomeAgentState(TypedDict):
     messages: Annotated[list[AnyMessage], operator.add]
     command: str
-    # Raw email data
-    email_content: str
-    sender_email: str
-    email_id: str
+
+    first_filter_devices: str
+    second_filter_devices: str
 
     # Classification result
     classification: EmailClassification | None
@@ -112,44 +112,32 @@ def node_filter_1(state:SmartHomeAgentState)-> Command[Literal["filter_2_node", 
     :param state:
     :return:
     """
-    # 不需要工具，从记忆里获取信息，进行初筛 和 细筛
-    task=state["command"]
-    device_fact_dict=SMARTHOMEMEMORY.device_fact
-    device_fact_str_list=[]
-    # 应该是从向量数据库里拿取
-    for device_id,device_fact in device_fact_dict.items():
-        device_name=device_fact["device_name"]
-        # 将device_fact中的states（字符串列表）拼接成一个字符串，逗号分隔
-        states_list = device_fact.get("states", [])
-        states_str = ", ".join(states_list) if states_list else "无"
-        # 将device_fact中的capabilities（字符串列表）拼接成一个字符串，逗号分隔
-        capabilities_list = device_fact.get("capabilities", [])
-        capabilities_str = ", ".join(capabilities_list) if capabilities_list else "无"
-        # 将device_id和states字符串、capabilities字符串拼接形成device_brief
-        # 格式示例："dev_001 | 状态：开关状态、亮度 | 能力：打开灯光、调节色温"
-        a_device_brief = f"{device_id}({device_name}) | 可获取状态：{states_str} | 能力：{capabilities_str}"
-        device_fact_str_list.append(a_device_brief)
-    devices_brief = "\n".join(device_fact_str_list) if device_fact_str_list else "无"
-
-    prompt=f"""
-    根据所有的设备简介（设备能做什么，能从设备获取到什么），选出可能能用于完成此次任务的设备ID列表
-    【任务】
-    {task}
-    【设备简要】
-    {devices_brief}
-    """
-    agent = create_agent(
-        model=get_llm(),
-        response_format=DeviceIdList,
+    json_str_compact="""{"devices":[{"device_id":"164c1a92b8ce9cda0e2a8c13440b4722","device_name":"灯泡","device_reason":"支持打开灯光、关闭灯光等操作，能完成开床边灯的任务"}]}"""
+    content=[AIMessage(content=json_str_compact)]
+    return Command(
+        update={"messages": content,
+                "first_filter_devices": json_str_compact},  # Store raw results or error
+        goto="filter_2_node"
     )
+
+    system_prompt = f"""
+        根据所有的设备简介（设备能做什么，能从设备获取到什么），选出可能能用于完成此次任务的设备ID列表，并简单说明理由.
+        - 如果【任务】里的设备有限定条件，比如床边的灯、卧室的空调等，你不需要在意限定条件，只需要根据设备能做什么、能获取什么来筛选可能的设备，之后会根据限定条件进一步筛选
+        """
+    agent = create_agent(model=get_llm(),
+                         tools=[get_device_all_states, get_device_all_capabilities],
+                        system_prompt=system_prompt,
+                         response_format=DeviceIdList,
+                         )
     result = agent.invoke({
         "messages": [
-            {
-                "role": "user",
-                "content": prompt
-            }
+            {"role": "user", "content": state['command']},
         ]
     })
+    # 日志打印
+    msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+    GLOBALCONFIG.logger.info(msg_content)
+
     deviceInfoList = result["structured_response"]
     # 无缩进（紧凑格式，适合传输/存储）
     json_str_compact = deviceInfoList.model_dump_json()
@@ -158,7 +146,8 @@ def node_filter_1(state:SmartHomeAgentState)-> Command[Literal["filter_2_node", 
 
     content = [AIMessage(content=json_str_compact)]
     return Command(
-        update={"messages": content},  # Store raw results or error
+        update={"messages": content,
+                "first_filter_devices":json_str_compact},  # Store raw results or error
         goto="filter_2_node"
     )
 
@@ -170,20 +159,37 @@ def node_filter_2(state:SmartHomeAgentState)-> Command[Literal["planner_node", E
     """
     # 不需要工具，从记忆里获取信息，进行初筛 和 细筛
 
-    second_filter_prompt="""
-    如果用户指令包含约束条件，根据约束条件（设备环境信息、用户对设备的称呼等），从候选设备里挑出满足的设备
+    prompt=f"""
+    【任务】：{state["command"]}
+    【候选设备集】：{state["first_filter_devices"]}
+    如果用户指令包含约束条件，根据约束条件（设备环境信息、用户对设备的称呼等），从候选设备里挑出满足的设备。
+    - 比如用户要打开客厅餐桌的灯和卧室床边的灯，候选设备集里有两盏灯（灯1和灯2），那么需要调用tool获取这两盏灯各自与[[客厅，餐桌],[卧室，床边]]的相似记忆内容。
+    - 然后检查是否有说明这两盏灯满足条件，如果都不满足，那么不应该选用。比如灯1的检索到的记忆既没说明其在卧室，也没说明其在客厅，那么不该选出灯1
+    最后保留设备ID，和简单说明理由。如果没有任何设备满足约束条件，说明原因。
     """
-
-    agent = create_agent(model=get_llm(), tools=[get_device_constraints_individual_match_scores])
+    agent = create_agent(model=get_llm(),
+                         tools=[get_device_constraints_individual_match_text],
+                         # response_format=DeviceIdList,
+                         )
     result = agent.invoke({
         "messages": [
-            {"role": "system", "content": "广州天气怎么样"},
+            {"role": "system", "content": prompt},
         ]
     })
+    # 日志打印
+    msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+    GLOBALCONFIG.logger.info(msg_content)
 
-    content = [AIMessage(content="device_01")]
+    deviceInfoList = result["structured_response"]
+    # 无缩进（紧凑格式，适合传输/存储）
+    json_str_compact = deviceInfoList.model_dump_json()
+    # 带缩进（美化格式，适合调试/查看）
+    json_str_pretty = deviceInfoList.model_dump_json(indent=4)
+
+    content = [AIMessage(content=json_str_compact)]
     return Command(
-        update={"messages": content},  # Store raw results or error
+        update={"messages": content,
+                "second_filter_devices": json_str_compact},  # Store raw results or error
         goto="planner_node"
     )
 
@@ -193,16 +199,15 @@ def node_planner(state:SmartHomeAgentState)-> Command[Literal["deliver_node", EN
     :param state:
     :return:
     """
-    planner_prompt="""
+    prompt=f"""
+    【候选设备集】：{state["second_filter_devices"]}
     根据设备能力和获取状态、当前状态、使用习惯，规划出应该让每个设备做什么
     """
-    executor_prompt="""
-    三个执行体，根据计划表，选用相应的执行体完成任务
-    """
+    # todo 改成从设备列表获取 设备能力和获取状态
     agent = create_agent(model=get_llm(), tools=[get_device_all_states,get_device_all_capabilities,get_device_all_usage_habits,executor_planning],)
     result = agent.invoke({
         "messages": [
-            {"role": "system", "content": "广州天气怎么样"},
+            {"role": "system", "content": prompt},
         ]
     })
     content = [AIMessage(content="对device_01开灯")]

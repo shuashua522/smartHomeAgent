@@ -1,3 +1,7 @@
+import os
+import uuid
+
+from langchain.agents import create_agent
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
@@ -6,11 +10,22 @@ from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunct
 from chromadb.api.models.Collection import Collection
 from langchain.tools import tool
 
+from smartHome.m_agent.common.get_llm import get_llm
 
+def get_short_uuid_by_cut(length: int = 12) -> str:
+    """
+    截取uuid的hex值生成短字符串
+    :param length: 要生成的短字符串长度（建议4-16位，过长失去缩短意义，过短易冲突）
+    :return: 简短字符串（十六进制，0-9a-f）
+    """
+    if not (4 <= length <= 32):
+        raise ValueError("长度建议在4-32之间")
+    full_hex = uuid.uuid4().hex
+    return full_hex[:length]  # 截取前length位（也可截取后length位：full_hex[-length:]）
 # 1. 数据模型（保持不变）
 class TextWithMeta(BaseModel):
     """单条文本的数据模型（含内容、多标签、元信息）"""
-    text_id: str  # 文本唯一标识（方便后续更新/删除）
+    text_id: str = Field(default_factory=lambda: get_short_uuid_by_cut(12),description="文本唯一标识（方便后续更新/删除）")
     content: str  # 核心文本内容（用于生成向量）
 
     # 标签，表示这个content是什么类型的信息
@@ -22,7 +37,7 @@ class TextWithMeta(BaseModel):
 
     # 修正1：create_time 用Field设置实时默认值（lambda确保实例化时实时计算）
     create_time: datetime = Field(default_factory=lambda: datetime.now(), description="创建时间")
-    update_time: Optional[datetime] = None  # 更新时间（元信息，可选）
+    update_time: datetime = Field(default_factory=lambda: datetime.now(), description="更新时间")  # 更新时间（元信息，可选）
     source:  Optional[str] = None
     other_meta: Optional[dict] = None  # 其他自定义元信息（如作者、来源等）
 
@@ -33,7 +48,9 @@ class VectorDB():
             model_name="all-MiniLM-L6-v2"  # 轻量高效，支持中英文
         )
         # 初始化Chroma向量数据库（保持不变，支持持久化）
-        self.client = chromadb.PersistentClient(path="./chroma_text_db")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, "chroma_text_db")
+        self.client = chromadb.PersistentClient(path=file_path)
         # 定义极小值，避免除零错误（保证d>0）
         self.epsilon = 1e-6
         # 定义默认距离（无匹配/空集合时使用，代表低匹配度）
@@ -81,9 +98,73 @@ class VectorDB():
         )
         print(f"✅ 文本「{text_data.text_id}」已成功存入向量数据库")
 
+    def retrieve_similar_content(self,collection_name: str,old_content: str,topk: int = 5,tag:str="device_id_clues") -> List[Dict]:
+        """
+        从指定集合中检索与old_content最相似的TopK条内容
+        :param collection_name: 目标集合名称（设备ID）
+        :param old_content: 待匹配的原始文本内容
+        :param topk: 要返回的最相似结果条数，默认5
+        :return: 格式化的相似结果列表，每个元素包含id、content、distance、metadata（距离越小越相似）
+        """
+        # 步骤1：输入参数校验
+        if not isinstance(collection_name, str) or len(collection_name.strip()) == 0:
+            raise ValueError("集合名称（collection_name）不能为空且必须为字符串")
+        if not isinstance(old_content, str) or len(old_content.strip()) == 0:
+            raise ValueError("待匹配文本（old_content）不能为空且必须为字符串")
+        if not isinstance(topk, int) or topk <= 0:
+            raise ValueError("TopK（topk）必须为正整数")
+
+        # 步骤2：获取目标集合（复用已有方法，若集合不存在则创建空集合）
+        target_collection = self.get_or_create_collection(collection_name=collection_name)
+
+        # 步骤3：判断集合是否有文档，无文档直接返回空列表
+        if target_collection.count() == 0:
+            print(f"提示：集合「{collection_name}」中无任何文档，无法进行相似性检索")
+            return []
+
+        # 步骤4：执行相似性检索（Chroma的query方法）
+        try:
+            # query_texts：传入待匹配文本列表（单文本检索传列表包裹）
+            # n_results：返回最相似的topk条结果
+            # include：指定返回的字段（ids=文档ID、documents=文档内容、distances=匹配距离、metadatas=文档元数据）
+            boolean_where_filter = {"device_id_clues": {"$eq": True}}
+            retrieve_result = target_collection.query(
+                query_texts=[old_content.strip()],
+                where=boolean_where_filter,
+                n_results=topk,
+                include=["documents", "distances", "metadatas"]
+            )
+        except Exception as e:
+            raise RuntimeError(f"相似性检索失败：{str(e)}") from e
+
+        # 步骤5：格式化检索结果（Chroma返回结果为字典，需整理为易使用的列表）
+        formatted_results = []
+        # Chroma返回的每个字段都是二维列表（对应多个query_texts），这里取索引0（单文本检索）
+        ids = retrieve_result.get("ids", [[]])[0]
+        documents = retrieve_result.get("documents", [[]])[0]
+        distances = retrieve_result.get("distances", [[]])[0]
+        metadatas = retrieve_result.get("metadatas", [[]])[0]
+
+        # 遍历结果，拼接为结构化字典
+        for doc_id, content, distance, meta in zip(ids, documents, distances, metadatas):
+            # 处理距离异常值（保证大于epsilon，与类中定义一致）
+            safe_distance = max(distance, self.epsilon) if distance is not None else self.default_distance
+            # 处理元数据为None的情况
+            safe_meta = meta if isinstance(meta, dict) else {}
+
+            formatted_results.append({
+                "doc_id": doc_id,  # 文档唯一ID
+                "content": content,  # 文档核心内容
+                # "distance": safe_distance,  # 匹配距离（越小越相似）
+                # "metadata": safe_meta  # 文档元数据（如创建时间、标签等）
+            })
+
+        # 步骤6：返回格式化结果（无匹配结果时返回空列表）
+        return formatted_results
+
     def search_topK_device_by_clues(self, clues: List[str], topk: int = 3) -> List[Dict[str, Any]]:
         """
-        遍历向量库所有集合，采用调和平均聚合多线索相似度，返回综合匹配度最高的topk个集合
+        遍历向量库所有设备，采用调和平均聚合多线索相似度，返回综合匹配度最高的topk个设备
         新增：每个集合包含与各线索最相似的文档详情
         :param clues: 查询线索列表（如["床边的灯", "飞利浦"]）
         :param topk: 返回结果数量
@@ -185,6 +266,101 @@ class VectorDB():
 
         # 步骤7：格式化返回结果
         return sorted_collections
+
+    def update_document_content(self,
+                                collection_name: str,
+                                doc_id: str,
+                                new_content: str) -> str:
+        """
+        更新指定集合中指定doc_id的文档内容为new_content（自动重新生成向量）
+        :param collection_name: 目标集合名称（设备ID）
+        :param doc_id: 待更新文档的唯一ID
+        :param new_content: 文档的新内容（替换原有内容）
+        :return: 更新结果说明
+        """
+        # 步骤1：输入参数合法性校验
+        if not isinstance(collection_name, str) or len(collection_name.strip()) == 0:
+            raise ValueError("集合名称（collection_name）不能为空且必须为字符串")
+        if not isinstance(doc_id, str) or len(doc_id.strip()) == 0:
+            raise ValueError("文档ID（doc_id）不能为空且必须为字符串")
+        if not isinstance(new_content, str) or len(new_content.strip()) == 0:
+            raise ValueError("新文档内容（new_content）不能为空且必须为字符串")
+
+        # 步骤2：获取目标集合（复用已有方法）
+        target_collection = self.get_or_create_collection(collection_name=collection_name)
+
+        # 步骤3：校验集合是否有文档，无文档直接返回失败结果
+        if target_collection.count() == 0:
+            return f"更新失败：集合「{collection_name}」中无任何文档，不存在文档「{doc_id}」"
+        # 步骤4：校验待更新文档（doc_id）是否存在【核心修复部分】
+        try:
+            # 修复点1：去掉include=["ids"]，改为合法的include（或不指定include，默认返回ids+其他必要字段）
+            # 仅传入ids=[doc_id.strip()]，查询指定文档，include传入["documents"]（合法字段，仅为验证存在性）
+            existing_doc = target_collection.get(
+                ids=[doc_id.strip()],
+                include=["documents"]  # 传入合法字段，无需指定ids（返回结果默认包含ids）
+            )
+        except Exception as e:
+            raise RuntimeError(f"查询待更新文档失败：{str(e)}") from e
+
+        # 修复点2：判断返回的ids列表是否非空，验证文档是否存在
+        existing_ids = existing_doc.get("ids", [])
+        if not existing_ids or len(existing_ids) == 0:
+            return f"更新失败：集合「{collection_name}」中不存在文档「{doc_id}」"
+
+        # 步骤5：执行文档内容更新（Chroma自动重新生成向量）
+        try:
+            target_collection.update(
+                ids=[doc_id.strip()],  # 指定待更新的文档ID（列表格式，支持批量更新）
+                documents=[new_content.strip()]  # 新文档内容（与ids一一对应）
+            )
+        except Exception as e:
+            raise RuntimeError(f"文档内容更新失败：{str(e)}") from e
+
+        # 步骤6：返回成功结果
+        return f"更新成功：集合「{collection_name}」中的文档「{doc_id}」内容已替换为新内容"
+
+    def delete_document(self,collection_name: str,doc_id: str) -> str:
+        """
+        从指定集合中精准删除doc_id对应的文档（完整移除内容、向量、元数据）
+        :param collection_name: 目标集合名称（设备ID）
+        :param doc_id: 待删除文档的唯一ID
+        :return: 格式化的删除结果字典，包含是否成功、提示信息、删除详情
+        """
+        # 步骤1：输入参数合法性校验
+        if not isinstance(collection_name, str) or len(collection_name.strip()) == 0:
+            raise ValueError("集合名称（collection_name）不能为空且必须为字符串")
+        if not isinstance(doc_id, str) or len(doc_id.strip()) == 0:
+            raise ValueError("文档ID（doc_id）不能为空且必须为字符串")
+
+        # 步骤2：获取目标集合（复用已有方法，集合不存在则创建空集合，后续校验会拦截）
+        target_collection = self.get_or_create_collection(collection_name=collection_name)
+
+        # 步骤3：校验集合是否有文档，无文档直接返回失败结果
+        if target_collection.count() == 0:
+            return f"删除失败：集合「{collection_name}」中无任何文档，不存在文档「{doc_id}」"
+
+        # 步骤4：校验待删除文档（doc_id）是否存在（沿用修复后的get方法逻辑，避免报错）
+        try:
+            # 省略include参数，默认返回ids；或指定合法include字段，仅为验证存在性
+            existing_doc = target_collection.get(ids=[doc_id.strip()])
+        except Exception as e:
+            raise RuntimeError(f"查询待删除文档失败：{str(e)}") from e
+
+        existing_ids = existing_doc.get("ids", [])
+        if not existing_ids or len(existing_ids) == 0:
+            return f"删除失败：集合「{collection_name}」中不存在文档「{doc_id}」"
+
+        # 步骤5：执行文档删除（Chroma的delete方法，通过ids精准删除，支持批量）
+        try:
+            target_collection.delete(
+                ids=[doc_id.strip()]  # 列表格式，支持批量删除（如["doc_001", "doc_002"]）
+            )
+        except Exception as e:
+            raise RuntimeError(f"文档删除失败：{str(e)}") from e
+
+        # 步骤6：返回格式化的成功结果
+        return f"删除成功：集合「{collection_name}」中的文档「{doc_id}」已被完整移除"
 
     def get_device_multi_constraints_individual_match_scores(
             self,
@@ -483,10 +659,41 @@ class VectorDB():
         # 去重+过滤空字符串，避免冗余和无效内容
         unique_contents = list(filter(None, list(dict.fromkeys(doc_contents))))
         # 用「、」拼接，中文场景更易读
-        return "、".join(unique_contents)
+
+        return f"{device_id}({collection.metadata['device_name']}):{'、'.join(unique_contents)}"
 
 VECTORDB=VectorDB()
 
+
+def format_collections_to_string(sorted_collections):
+    """
+    格式化 VECTORDB.search_topK_device_by_clues()的结果成字符串，以提供给LLM
+    :param sorted_collections:
+    :return:
+    """
+    # 初始化最终的格式化字符串（用列表存储各设备信息，最后拼接，效率高于字符串直接累加）
+    result_lines = []
+    # 添加上下文标题，提升可读性
+    result_lines.append("=== TopK 最优设备匹配结果汇总 ===")
+
+    # 步骤1：遍历sorted_collections中的每个设备（嵌套字典）
+    for idx, collection in enumerate(sorted_collections, start=1):
+        device_id = collection["collection_name"]
+
+        clue_best_docs = collection["clue_best_docs"]
+        # 3.2 格式化线索与最佳匹配文本（遍历clue_best_docs，展示对应关系）
+        result_lines.append(f"{device_id}与各线索的最佳匹配文本详情：")
+        for clue, best_doc in clue_best_docs.items():
+            # 处理最佳文本可能为None/空字符串的边界情况，避免展示混乱
+            best_content=best_doc["content"]
+            doc_content = best_content if best_content else "无匹配有效文本"
+            # 缩进展示，提升可读性
+            result_lines.append(f"  - 线索「{clue}」：{doc_content}")
+
+    # 步骤4：将列表中的所有行拼接为一个完整字符串（用换行符\n连接）
+    final_formatted_str = "\n".join(result_lines)
+
+    return final_formatted_str
 @tool
 def search_topK_device_by_clues(clues: List[str]):
     """
@@ -495,7 +702,19 @@ def search_topK_device_by_clues(clues: List[str]):
     :param topk:
     :return:
     """
-    pass
+    sorted_collections=VECTORDB.search_topK_device_by_clues(clues=clues,topk=3)
+    topk_devices_str=format_collections_to_string(sorted_collections)
+    prompt = """
+            找到最符合线索/约束条件的设备，仅返回最佳的设备ID
+            """
+
+    agent = create_agent(model=get_llm())
+    result = agent.invoke({
+        "messages": [
+            {"role": "system", "content": prompt},
+        ]
+    })
+    return result["messages"][-1].content
 
 @tool
 def add(device_id:str,content:str,tag:str):
@@ -503,11 +722,23 @@ def add(device_id:str,content:str,tag:str):
     添加事实信息
     :param device_id:
     :param content:
-    :param tag:
+    :param tag: 取值为【capabilities，device_id_clues，usage_habits】中的任一个。
+    capabilities说明content是设备能力的补充；device_id_clues说明content是从多个设备中找到该设备的线索；usage_habits说明content是设备的使用习惯
     :return:
     """
-    pass
+    text_instance=TextWithMeta(
+        content=content
+    )
+    setattr(text_instance, tag, True)
+    VECTORDB.add_text_to_vector_db(text_instance,VECTORDB.get_or_create_collection(device_id))
+    return "添加成功"
 
+@tool
+def tool_update_doc_content(device_id: str,doc_id: str,new_content: str):
+    """
+    更新指定设备集合中指定doc_id的文档内容为new_content
+    """
+    return VECTORDB.update_document_content(device_id,doc_id,new_content)
 @tool
 def update(device_id:str,old_content:str,new_content:str):
     """
@@ -517,8 +748,26 @@ def update(device_id:str,old_content:str,new_content:str):
     :param tag:
     :return:
     """
-    pass
+    retrieve_result=VECTORDB.retrieve_similar_content(collection_name=device_id, old_content=old_content)
+    prompt = f"""
+    根据检索结果找到与{old_content}最相似的doc_id，然后调用工具将内容更新为{new_content}
+    【检索结果】:{retrieve_result}
+    """
 
+    agent = create_agent(model=get_llm(),tools=[tool_update_doc_content],)
+    result = agent.invoke({
+        "messages": [
+            {"role": "system", "content": prompt},
+        ]
+    })
+    return result["messages"][-1].content
+
+@tool
+def tool_delete_doc_content(device_id: str,doc_id: str):
+    """
+    从指定集合中精准删除doc_id对应的文档
+    """
+    return VECTORDB.delete_document(collection_name=device_id,doc_id=doc_id)
 @tool
 def delete(device_id:str,content:str):
     """
@@ -528,49 +777,76 @@ def delete(device_id:str,content:str):
     :param tag:
     :return:
     """
-    pass
+    retrieve_result = VECTORDB.retrieve_similar_content(collection_name=device_id, old_content=content)
+    prompt = f"""
+        根据检索结果找到与{content}最相似的doc_id，然后调用工具将其删除
+        【检索结果】:{retrieve_result}
+        """
+
+    agent = create_agent(model=get_llm(), tools=[tool_delete_doc_content], )
+    result = agent.invoke({
+        "messages": [
+            {"role": "system", "content": prompt},
+        ]
+    })
+    return result["messages"][-1].content
 
 @tool
-def get_device_constraints_individual_match_scores(
+def get_device_constraints_individual_match_text(
     device_id: str,
     multi_clues: List[List[str]]
-):
+)->str:
     """
-    返回单个设备对多个约束条件各自对应的匹配度得分。
-
+    返回记忆库中该设备对多个约束条件各自对应的匹配文本。
     :param device_id: 智能家居设备的唯一标识ID（如Home Assistant设备ID）。
     :param multi_clues: 设备匹配的约束条件/定位线索集合，外层列表包含多个独立约束条件，每个约束条件对应一个内部字符串列表（存储该约束的具体线索内容）。
-    :return: Dict[Union[int, str], float] - 匹配度结果字典，键为约束条件的索引（或线索组合摘要），值为对应约束条件下设备的匹配度得分（通常取值范围0~1）。
     """
     # todo 核验VectorDB里面的实现，调用整理结果后返回
-    pass
+    search_result=VECTORDB.get_device_multi_constraints_individual_match_scores(device_id=device_id,multi_clues=multi_clues)
+    ans_str_list = []
+    for key, val in search_result.items():
+        content_str = ",".join([item["content"] for item in val["matching_documents"]])
+        clue_result_str = f"对于线索/约束：{key},匹配到的内容为:{content_str})"
+        ans_str_list.append(clue_result_str)
+
+    return "\n".join(ans_str_list)
 
 @tool
-def get_device_all_states(device_id: str):
+def get_device_all_states()->str:
     """
-    获取可以从设备ID查询到的所有状态信息
-    :param device_id: 设备ID
-    :return:
+    获取可以从家中所有设备，其各自能查询到的所有状态信息
     """
-    return VECTORDB.get_device_states_combined(device_id)
+    all_collections = VECTORDB.client.list_collections()
+    ans_str_list=[]
+    for collection in all_collections:
+        device_id = collection.name
+        ans_str_list.append(VECTORDB.get_device_states_combined(device_id=device_id))
+    return "\n".join(ans_str_list)
 
 @tool
-def get_device_all_capabilities(device_id: str):
+def get_device_all_capabilities()->str:
     """
-    获取可以从设备ID查询到的所有能力信息
-    :param device_id: 设备ID
-    :return:
+    获取可以从家中所有设备，其各自能查询到的所有能力信息
     """
-    return VECTORDB.get_device_capabilities_combined(device_id)
+    all_collections = VECTORDB.client.list_collections()
+    ans_str_list = []
+    for collection in all_collections:
+        device_id = collection.name
+        ans_str_list.append(VECTORDB.get_device_capabilities_combined(device_id=device_id))
+    return "\n".join(ans_str_list)
+
 
 @tool
 def get_device_all_usage_habits(device_id: str):
     """
-    获取可以从设备ID查询到的所有使用习惯
-    :param device_id: 设备ID
-    :return:
+    获取可以从家中所有设备，其各自能查询到的所有使用习惯
     """
-    return VECTORDB.get_device_usage_habits_combined(device_id)
+    all_collections = VECTORDB.client.list_collections()
+    ans_str_list = []
+    for collection in all_collections:
+        device_id = collection.name
+        ans_str_list.append(VECTORDB.get_device_usage_habits_combined(device_id=device_id))
+    return "\n".join(ans_str_list)
 
 
 
@@ -690,8 +966,38 @@ def test_device_multi_constraints_match_pydantic():
 
 # ---------------------- 执行测试 ----------------------
 if __name__ == "__main__":
-    test_device_multi_constraints_match_pydantic()
+    # test_device_multi_constraints_match_pydantic()
+    # VECTORDB.print_all_collections_content()
+    device_id="164c1a92b8ce9cda0e2a8c13440b4722"
+    multi_clues=[['床边']]
+    search_result = VECTORDB.get_device_multi_constraints_individual_match_scores(device_id=device_id,
+                                                                                  multi_clues=multi_clues)
+    ans_str_list = []
+    for key, val in search_result.items():
+        content_str = ",".join([item["content"] for item in val["matching_documents"]])
+        clue_result_str = f"对于线索/约束：{key},匹配到的内容为:{content_str})"
+        ans_str_list.append(clue_result_str)
 
+    print("\n".join(ans_str_list))
+    # result=VECTORDB.search_topK_device_by_clues(clues=["灯泡","调色温"],topk=3)
+    # print(format_collections_to_string(result))
+    """
+    ⚠️  设备ID「28adb3b1-b520-4c5b-8b13-8b93bdfa5d5c」对应的集合不存在
+⚠️  设备ID「7ff9f9cc-c531-4d3f-939e-b95386d6f7b2」对应的集合不存在
+⚠️  设备ID「9bde1df2-dfcb-4966-a6a3-3026fa17fd77」对应的集合不存在
+    """
+
+    # text=TextWithMeta(
+    #     content="df406d66e297203b9cbccd7f7b2b0376",
+    #     device_id_clues=True
+    # )
+    # VECTORDB.add_text_to_vector_db(text_data=text,collection=VECTORDB.get_or_create_collection("df406d66e297203b9cbccd7f7b2b0376"))
+    # all_collections = VECTORDB.client.list_collections()
+    # ans_str_list = []
+    # for collection in all_collections:
+    #     device_id = collection.name
+    #     ans_str_list.append(VECTORDB.get_device_states_combined(device_id=device_id))
+    # print("\n".join(ans_str_list))
 
 
 

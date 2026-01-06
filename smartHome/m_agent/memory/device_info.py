@@ -25,7 +25,17 @@ class DeviceInfo():
             if domain_service["domain"]==domain:
                 return domain_service
     def _load_from_json(self,file_name):
-        with open(f"./copied_data/{file_name}.json", "r", encoding="utf-8") as f:
+        # 1. 获取当前py文件的绝对目录路径
+        # os.path.abspath(__file__)：获取当前py文件的完整绝对路径
+        # os.path.dirname()：提取路径中的目录部分（去掉文件名）
+        current_script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # 2. 拼接目标json文件的完整路径（跨平台兼容）
+        # os.path.join()：自动适配不同系统的路径分隔符
+        json_file_path = os.path.join(current_script_dir, "copied_data", f"{file_name}.json")
+
+        # 3. 打开文件并加载json数据
+        with open(json_file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data
 
@@ -78,7 +88,8 @@ class DeviceInfo():
         # 2. 遍历每个实例变量，逐个保存为JSON文件
         for var_name, var_value in instance_vars.items():
             # 构建文件路径：./temp_output/变量名.json
-            file_path = os.path.join("./temp_output", f"{var_name}.json")
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            file_path = os.path.join(current_dir, "temp_output", f"{var_name}.json")
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(var_value, f, ensure_ascii=False, indent=2)
 

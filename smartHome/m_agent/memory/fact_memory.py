@@ -507,17 +507,13 @@ class SmartHomeMemory():
             print(f"保存init_fact到JSON失败：{e}", file=sys.stderr)
             raise  # 可选：抛出异常让上层处理，根据业务需求调整
 
-    def extract(self,dialogue_record:str):
+    def extract_and_update(self,dialogue_record:str):
         """
         通过当前对话，和最近几条对话，提取事实性信息，
-        并将事实性信息绑定到对应的设备ID中，
+        并将事实性信息更新到对应的设备ID中，
         :param dialogue_record:
         :return:
         """
-        agent = create_agent(
-            model=get_llm(),
-            response_format=DeviceFactList,  # 替换为DeviceFactList
-        )
 
         # 包含多个设备的对话记录（客厅灯+卧室空调+厨房插座）
         # dialogue_record = """
@@ -525,60 +521,26 @@ class SmartHomeMemory():
         # 客服：您还有其他智能家居设备的使用习惯吗？
         # 用户：卧室的空调我每天早上7点打开，调26℃，能调风速和定时；厨房的插座是智能的，能远程开关，我一般叫它厨房智能插座。
         # """
-        prompt="""
+        prompt=f"""
+        【对话】{dialogue_record}
         根据当前对话和近期的历史对话，分析是否有新增/过时/修改的事实信息，如果有：
-        1. 调用工具获取到该设备ID
-        2. 调用add/delete/update工具对记忆库中的信息进行处理
+        1. 对话里没有提供设备ID时，调用工具获取到该设备ID
+        2. 选择并调用add/delete/update工具对记忆库中的信息进行更新
+        3. 更新成功后简单说明本次更新了哪些内容。
         """
 
         agent = create_agent(model=get_llm(),
                              tools=[search_topK_device_by_clues, add, delete,update], )
         result = agent.invoke({
             "messages": [
-                {"role": "system", "content": "广州天气怎么样"},
+                {"role": "system", "content": prompt},
             ]
         })
+        msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+        GLOBALCONFIG.memory_logger.info(msg_content)
 
-        result = agent.invoke({
-            "messages": [
-                {
-                    "role": "user",
-                    "content": f"""从以下对话记录中提取**所有智能家居设备**的事实性信息，严格遵守：
-        【核心规则】
-        1. 识别对话中提及的每一个独立设备，为每个设备生成一个独立的DeviceFact实例；
-        2. 每个DeviceFact仅填充该设备对应的信息，未提及的字段保留默认值（device_id为None，列表字段为空）；
-        3. 字段内容简化为简短字符串，符合各字段的描述要求（如使用习惯仅保留核心行为）；
-        4. 不主观添加对话中未提及的信息，仅提取事实性内容。
-
-        【对话记录】
-        {dialogue_record}"""
-                }
-            ]
-        })
-
-        # 解析并输出多个设备的提取结果（核心修改）
-        device_fact_list_result = result["structured_response"]
-        return device_fact_list_result
-
-    def update(self,device_fact_list:str):
-        """
-
-        :param new_memory:
-        :return:
-        """
-
-        for new_device_fact in device_fact_list:
-            # 核心判断：device_id存在且不是空字符串
-            if new_device_fact.get("device_id") and new_device_fact["device_id"].strip():
-                # todo 使用llm依据new_device_fact调用 _retrieve_topk_similar_devices方法检索出最相似的topk设备候选，并从中挑出最佳的一个设备
-                new_device_fact["device_id"]=None
-
-        for new_device_fact in device_fact_list:
-            device_id=new_device_fact["device_id"]
-            old_device_fact=self.device_fact["device_id"]
-            # todo 让llm根据new_device_fact更新old_device_fact,输出格式：DeviceFact
-            updated_device_fact=None
-            self.device_fact["device_id"]=updated_device_fact
+        # device_fact_list_result = result["structured_response"]
+        return result["messages"][-1].content
 
 
 
@@ -604,7 +566,10 @@ def get_device_all_entities_capabilities(device_id: str):
 
 if __name__ == "__main__":
     # SmartHomeMemory().init_memory_by_deviceInfo()
-    SmartHomeMemory().init_memory_for_entity()
-    SmartHomeMemory().init_memory_for_device()
-    VECTORDB.print_all_collections_content()
+    dialogue_record="""
+    user:打开床边灯
+    ai:候选设备集中设备ID为“164c1a92b8ce9cda0e2a8c13440b4722”的灯泡，通过get_device_constraints_individual_match_text工具查询其对“床边”约束条件的匹配内容，返回结果为“灯泡 灯)”，未明确说明该灯泡位于床边，暂无法确定其是否满足“床边灯”的约束条件。
+    user:没错，就是 它
+    """
+    SMARTHOMEMEMORY.extract_and_update(dialogue_record)
     pass
