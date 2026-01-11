@@ -1,6 +1,490 @@
 {
+  "cf03cb835279ea4876ab6ee202aa9832": {
+    "device_id": "cf03cb835279ea4876ab6ee202aa9832",
+    "device_name": "门窗传感器",
+    "states": [
+      "光照度状态",
+      "电量",
+      "开关状态"
+    ],
+    "capabilities": [],
+    "device_id_clues": [
+      "sensor",
+      "isa_cn_blt_3_1md0u6qht0k00_dw2hl_illumination_p_2_1",
+      "门窗传感器 光照度",
+      "弱/强状态",
+      "binary_sensor",
+      "门窗传感器",
+      "接触状态",
+      "电量",
+      "电池电量"
+    ],
+    "usage_habits": [],
+    "others": [
+      "设备类型：enum传感器",
+      "HA集成：isa",
+      "设备型号：ISA-CN-BLT-3",
+      "供电方式：纽扣电池"
+    ]
+  },
+  "d914ad946380fb5987bc7ff313bb0a45": {
+    "device_id": "d914ad946380fb5987bc7ff313bb0a45",
+    "device_name": "门窗传感器",
+    "states": [
+      "光照度状态",
+      "电池电量",
+      "开关状态"
+    ],
+    "capabilities": [],
+    "device_id_clues": [
+      "sensor",
+      "门窗传感器",
+      "光照度",
+      "isa_cn_blt_3_2ne1v7riu1l11_dw2hl_illumination_p_2_1",
+      "电量",
+      "电池电量",
+      "binary_sensor",
+      "接触状态"
+    ],
+    "usage_habits": [],
+    "others": [
+      "设备类型：enum传感器",
+      "HA集成：isa",
+      "device_class：enum",
+      "icon：mdi:format-text",
+      "设备型号：ISA-CN-BLT-3",
+      "供电方式：纽扣电池",
+      "设备类型：door",
+      "last_changed：2025-11-04T06:56:41.803054+00:00",
+      "last_reported：2025-11-04T06:56:41.803054+00:00",
+      "last_updated：2025-11-04T06:56:41.803054+00:00"
+    ]
+  },
+  "31ae92d8a163d77f8d6a5741c0d1b89c": {
+    "device_id": "31ae92d8a163d77f8d6a5741c0d1b89c",
+    "device_name": "米家智能台灯Lite",
+    "states": [
+      "开关状态",
+      "亮度",
+      "效果模式",
+      "当前值",
+      "最小值",
+      "最大值",
+      "步长",
+      "模式",
+      "单位",
+      "时间间隔状态",
+      "推送休息事件状态"
+    ],
+    "capabilities": [
+      "按下按钮",
+      "打开灯光",
+      "关闭灯光",
+      "切换灯光状态",
+      "调节亮度百分比",
+      "设置灯光效果",
+      "设置数值",
+      "设置时间间隔值",
+      "打开开关",
+      "关闭开关",
+      "切换开关状态"
+    ],
+    "device_id_clues": [
+      "米家智能台灯Lite",
+      "button",
+      "开关状态切换",
+      "亮度-",
+      "亮度+",
+      "philips_cn_1061200910_lite_brightness_up_a_3_2",
+      "event",
+      "推送休息事件",
+      "philips_cn_1061200910_lite_notify_you_e_3_1",
+      "light",
+      "philips_cn_1061200910_lite_s_2",
+      "number",
+      "philips_cn_1061200910_lite_dvalue_p_3_1",
+      "s",
+      "视疲劳提醒时间间隔设置",
+      "philips_cn_1061200910_lite",
+      "switch",
+      "个性化功能",
+      "开启/关闭视疲劳提醒功能",
+      "夜间模式"
+    ],
+    "usage_habits": [],
+    "others": [
+      "HA集成：philips",
+      "设备型号：philips_cn_1061200910_lite_s_2",
+      "设备类型：switch",
+      "所属域：number",
+      "单位：min",
+      "最小值：1",
+      "最大值：120",
+      "步长：1",
+      "模式：auto",
+      "图标：mdi:clock",
+      "状态：unavailable",
+      "last_changed：2025-10-27T11:25:38.188751+00:00",
+      "last_reported：2025-10-27T11:25:38.188751+00:00",
+      "last_updated：2025-10-27T11:25:38.188751+00:00",
+      "event_types：推送休息事件"
+    ]
+  },
+  "e2bf03e9b274e88f9e7b6852d1e2c90d": {
+    "device_id": "e2bf03e9b274e88f9e7b6852d1e2c90d",
+    "device_name": "米家智能台灯Lite",
+    "states": [
+      "开关状态",
+      "亮度",
+      "效果模式",
+      "当前值",
+      "时间间隔状态"
+    ],
+    "capabilities": [
+      "按下按钮",
+      "设置数值",
+      "设置时间间隔值",
+      "打开灯光",
+      "关闭灯光",
+      "切换灯光状态",
+      "调节亮度",
+      "设置灯光效果",
+      "关闭开关",
+      "打开开关",
+      "切换开关状态"
+    ],
+    "device_id_clues": [
+      "米家智能台灯Lite",
+      "button",
+      "开关状态切换",
+      "亮度-",
+      "亮度+",
+      "推送休息事件",
+      "light",
+      "延时关灯的时间",
+      "视疲劳提醒时间间隔",
+      "switch",
+      "夜间模式"
+    ],
+    "usage_habits": [],
+    "others": [
+      "HA集成：philips",
+      "设备型号：philips_cn_1061201010_lite_s_2",
+      "单位：s",
+      "最小值：0",
+      "最大值：21600",
+      "步长：1",
+      "模式：auto",
+      "图标：mdi:clock",
+      "单位：min",
+      "最小值：1",
+      "最大值：120",
+      "步长：1",
+      "设备类型：switch",
+      "状态：unavailable"
+    ]
+  },
+  "ac5c6e84654cf19a5f91d3d36d0ff05b": {
+    "device_id": "ac5c6e84654cf19a5f91d3d36d0ff05b",
+    "device_name": "小米智能多模网关2",
+    "states": [
+      "开关状态",
+      "网络状态",
+      "亮度值",
+      "接入方式状态",
+      "IP地址",
+      "WiFi网络名称",
+      "网络变化状态",
+      "生效时间段"
+    ],
+    "capabilities": [
+      "触发按钮按压",
+      "设置数值",
+      "选择第一个选项",
+      "选择最后一个选项",
+      "选择下一个选项",
+      "选择指定选项",
+      "选择上一个选项",
+      "设置文本值"
+    ],
+    "device_id_clues": [
+      "小米智能多模网关2",
+      "button",
+      "event",
+      "number",
+      "select",
+      "sensor",
+      "text",
+      "设备确认",
+      "设备响应",
+      "网关",
+      "网络发生变化",
+      "网关按键",
+      "单击",
+      "双击",
+      "长按",
+      "网关防误删功能",
+      "指示灯亮度",
+      "勿扰模式状态(开/关)",
+      "网关防误删状态",
+      "接入方式",
+      "IP地址",
+      "WiFi网络名称",
+      "网络变化状态",
+      "生效时间段"
+    ],
+    "usage_habits": [],
+    "others": [
+      "设备型号：lumi.cn.551385025.mcn001",
+      "HA集成：lumi",
+      "供电方式：未知",
+      "联网方式：未知",
+      "所属域：button、event、number、select、sensor、text",
+      "单位：%（指示灯亮度）",
+      "最小值：1（指示灯亮度）",
+      "最大值：100（指示灯亮度）",
+      "步长：1（指示灯亮度）",
+      "模式：auto（指示灯亮度）",
+      "图标：mdi:percent（指示灯亮度）",
+      "状态值格式：21:00-09:00（生效时间段）"
+    ]
+  },
+  "21ab4b42c3e6a3fb27f93385082d4075": {
+    "device_id": "21ab4b42c3e6a3fb27f93385082d4075",
+    "device_name": "小米AI音箱（第二代）",
+    "states": [
+      "状态",
+      "开关状态",
+      "音量",
+      "静音状态",
+      "播放状态"
+    ],
+    "capabilities": [
+      "按下按钮",
+      "发送通知消息",
+      "发送带有notify的通知",
+      "关闭开关",
+      "打开开关",
+      "切换开关状态",
+      "打开音箱",
+      "关闭音箱",
+      "切换播放/暂停",
+      "播放音乐",
+      "暂停播放",
+      "停止播放",
+      "下一首",
+      "上一首",
+      "清除播放列表",
+      "设置音量",
+      "静音/取消静音",
+      "播放媒体",
+      "浏览媒体",
+      "搜索媒体",
+      "设置随机播放",
+      "设置重复模式"
+    ],
+    "device_id_clues": [
+      "button",
+      "小米AI音箱（第二代）",
+      "闹钟",
+      "停止闹钟",
+      "智能音箱 唤醒",
+      "xiaomi_cn_701074704_l15a_wake_up_a_7_1",
+      "智能音箱",
+      "播放电台",
+      "播放音乐",
+      "电视开关",
+      "打开电视",
+      "media_player",
+      "speaker",
+      "xiaomi_cn_701074704_l15a",
+      "notify",
+      "xiaomi_cn_701074704_l15a_seek_a_3_1",
+      "智能音箱 播放文本",
+      "xiaomi_cn_701074704_l15a_play_text_a_7_3",
+      "执行文本指令",
+      "xiaomi_cn_701074704_l15a_execute_text_directive_a_7_4",
+      "switch",
+      "麦克风 静音"
+    ],
+    "usage_habits": [],
+    "others": [
+      "设备类型：speaker",
+      "HA集成：xiaomi",
+      "supported_features：21565",
+      "设备型号：701074704_l15a",
+      "状态：off"
+    ]
+  },
+  "53bea65f446cb0a8150250354cb28a40": {
+    "device_id": "53bea65f446cb0a8150250354cb28a40",
+    "device_name": "小米人体传感器2S",
+    "states": [
+      "事件状态",
+      "移动检测状态",
+      "光照度",
+      "无移动状态持续时间",
+      "自定义超时无人移动时间",
+      "电池电量"
+    ],
+    "capabilities": [],
+    "device_id_clues": [
+      "小米人体传感器2S",
+      "移动检测传感器",
+      "event",
+      "sensor",
+      "电池电量"
+    ],
+    "usage_habits": [],
+    "others": [
+      "设备型号：xiaomi_cn_blt_3_1ftnm7360c800_pir1",
+      "HA集成：xiaomi",
+      "供电方式：电池",
+      "设备类型：motion、illuminance",
+      "单位：lx、s、min",
+      "icon: mdi:clock"
+    ]
+  },
+  "f4cfb76e557dc1b961361465dc39b51d": {
+    "device_id": "f4cfb76e557dc1b961361465dc39b51d",
+    "device_name": "小米人体传感器2S",
+    "states": [
+      "设备被重置事件状态",
+      "移动检测状态",
+      "光照度",
+      "无移动状态持续时间",
+      "自定义超时无人移动时间",
+      "电池电量"
+    ],
+    "capabilities": [],
+    "device_id_clues": [
+      "小米人体传感器2S",
+      "移动检测传感器",
+      "event",
+      "sensor",
+      "xiaomi_cn_blt_3_2gunh8471d911_pir1"
+    ],
+    "usage_habits": [],
+    "others": [
+      "HA集成：xiaomi",
+      "设备型号：xiaomi_cn_blt_3_2gunh8471d911_pir1",
+      "事件类型：设备被重置",
+      "设备类型：motion",
+      "所属域：event",
+      "unit_of_measurement: s",
+      "icon: mdi:clock",
+      "单位：lx",
+      "state_class：measurement",
+      "单位：min",
+      "图标：mdi:clock",
+      "设备类型：传感器",
+      "所属域：sensor",
+      "单位：%",
+      "状态类：measurement"
+    ]
+  },
+  "a5dfc87f668ed2c072472576ed40c62e": {
+    "device_id": "a5dfc87f668ed2c072472576ed40c62e",
+    "device_name": "小米人体传感器2S",
+    "states": [
+      "设备被重置事件状态",
+      "检测到移动时间",
+      "光照度",
+      "无移动状态持续时间",
+      "自定义超时无人移动时间",
+      "电池电量"
+    ],
+    "capabilities": [],
+    "device_id_clues": [
+      "小米人体传感器2S",
+      "移动检测传感器",
+      "event",
+      "sensor",
+      "xiaomi_cn_blt_3_3hvoj9582ea22_pir1"
+    ],
+    "usage_habits": [],
+    "others": [
+      "设备型号：xiaomi_cn_blt_3",
+      "HA集成：xiaomi",
+      "供电方式：电池供电",
+      "设备类型：motion、illuminance传感器",
+      "单位：lx、s、min",
+      "icon：mdi:clock",
+      "state_class：measurement",
+      "event_types:['设备被重置','检测到移动']",
+      "last_changed:2025-10-27T09:45:48.471727+00:00",
+      "last_reported:2025-10-27T09:45:48.471727+00:00",
+      "last_updated:2025-10-27T09:45:48.471727+00:00"
+    ]
+  },
   "164c1a92b8ce9cda0e2a8c13440b4722": {
     "device_id": "164c1a92b8ce9cda0e2a8c13440b4722",
+    "device_name": "灯泡  灯",
+    "states": [
+      "开关状态",
+      "亮度",
+      "色温",
+      "颜色",
+      "HS颜色",
+      "RGB颜色",
+      "XY颜色"
+    ],
+    "capabilities": [
+      "打开灯光",
+      "关闭灯光",
+      "切换灯光状态",
+      "调节亮度百分比",
+      "调节亮度",
+      "调节色温（开尔文）",
+      "调节色温（Mired）",
+      "设置颜色（RGB格式）",
+      "设置颜色（HS格式）",
+      "设置颜色（XY格式）",
+      "设置颜色名称"
+    ],
+    "device_id_clues": [
+      "light",
+      "yeelink_cn_1162511951_mbulb3_s_2",
+      "灯泡  灯"
+    ],
+    "usage_habits": [],
+    "others": [
+      "supported_features：0",
+      "color_mode：color_temp",
+      "supported_color_modes：['color_temp']"
+    ]
+  },
+  "b75d2b03c9dfaebf1f3b9d24551c5833": {
+    "device_id": "b75d2b03c9dfaebf1f3b9d24551c5833",
+    "device_name": "灯泡  灯",
+    "states": [
+      "开关状态",
+      "亮度",
+      "色温",
+      "颜色"
+    ],
+    "capabilities": [
+      "打开灯光",
+      "关闭灯光",
+      "切换灯光状态",
+      "调节亮度",
+      "调节色温"
+    ],
+    "device_id_clues": [
+      "light",
+      "yeelink_cn_1162512052_mbulb3_s_2",
+      "灯泡  灯",
+      "color_temp"
+    ],
+    "usage_habits": [],
+    "others": [
+      "HA集成：yeelink",
+      "设备型号：mbulb3",
+      "supported_features：0"
+    ]
+  },
+  "c86e3c14d0egbfc02g4cae35662d6944": {
+    "device_id": "c86e3c14d0egbfc02g4cae35662d6944",
     "device_name": "灯泡 灯",
     "states": [
       "开关状态",
@@ -13,19 +497,17 @@
       "关闭灯光",
       "切换灯光状态",
       "调节亮度",
-      "设置色温",
-      "设置颜色"
+      "设置色温"
     ],
     "device_id_clues": [
-      "灯泡 灯",
       "light",
-      "yeelink_cn_1162511951_mbulb3_s_2",
-      "支持color_temp模式"
+      "yeelink_cn_1162512153_mbulb3_s_2",
+      "灯泡  灯",
+      "color_temp"
     ],
     "usage_habits": [],
     "others": [
       "HA集成：yeelink",
-      "设备型号：mbulb3",
       "supported_features：0"
     ]
   },
@@ -46,12 +528,24 @@
       "cuco_cn_269067598_cp1_on_p_2_1"
     ],
     "usage_habits": [],
-    "others": [
-      "设备类型：switch",
-      "状态：on",
-      "last_changed：2025-11-04T06:51:43.918528+00:00",
-      "last_reported：2025-11-04T06:51:43.918528+00:00",
-      "last_updated：2025-11-04T06:51:43.918528+00:00"
-    ]
+    "others": []
+  },
+  "e0517e77f3a8314caeddef8a8c3c1487": {
+    "device_id": "e0517e77f3a8314caeddef8a8c3c1487",
+    "device_name": "插座",
+    "states": [
+      "开关状态"
+    ],
+    "capabilities": [
+      "打开开关",
+      "关闭开关",
+      "切换开关状态"
+    ],
+    "device_id_clues": [
+      "switch",
+      "插座  开关 开关"
+    ],
+    "usage_habits": [],
+    "others": []
   }
 }

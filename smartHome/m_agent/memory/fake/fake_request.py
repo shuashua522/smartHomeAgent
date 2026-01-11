@@ -10,7 +10,7 @@ parent_dir = os.path.dirname(current_dir)
 
 # 拼接 entities.json 和 services.json 的绝对路径
 entities_path = os.path.join(parent_dir, "copied_data","entities.json")
-services_path = os.path.join(current_dir, "copied_data","domains_services.json")
+services_path = os.path.join(parent_dir, "copied_data","domains_services.json")
 
 # 读取 JSON 文件
 entities = json.load(open(entities_path, "r", encoding="utf-8"))
@@ -46,13 +46,3 @@ def fake_get_states_by_entity_id(entity_id):
             return entity
     return None
 
-@tool
-def fake_execute_domain_service_by_entity_id(domain, service, body, ) -> Union[Dict, List]:
-    """
-    执行操作
-    :param domain:
-    :param service:
-    :param body:
-    :return:
-    """
-    pass

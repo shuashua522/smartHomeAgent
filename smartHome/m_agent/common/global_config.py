@@ -12,7 +12,8 @@ class Global_Config():
         self.base_url = self.configparser.get(self.provider, 'base_url')
         self.api_key = self.configparser.get(self.provider, 'api_key')
         self.logger = get_logger("my_test","logs/my_test.log")
-        self.memory_logger= get_logger("my_test","logs/memory_update.log")
+        self.memory_logger= get_logger("memory_update","logs/memory_update.log")
+        self.memory_init_logger= get_logger("memory_init","logs/memory_init.log")
         # env取值：dev，test，prod
         self.env="test"
     def load_configparser(self):

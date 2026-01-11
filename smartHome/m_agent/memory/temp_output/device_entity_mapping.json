@@ -1,8 +1,101 @@
 {
+  "cf03cb835279ea4876ab6ee202aa9832": [
+    "sensor.isa_cn_blt_3_1md0u6qht0k00_dw2hl_illumination_p_2_1",
+    "sensor.isa_cn_blt_3_1md0u6qht0k00_dw2hl_battery_level_p_3_1",
+    "binary_sensor.isa_cn_blt_3_1md0u6qht0k00_dw2hl_contact_state_p_2_2"
+  ],
+  "d914ad946380fb5987bc7ff313bb0a45": [
+    "sensor.isa_cn_blt_3_2ne1v7riu1l11_dw2hl_illumination_p_2_1",
+    "sensor.isa_cn_blt_3_2ne1v7riu1l11_dw2hl_battery_level_p_3_1",
+    "binary_sensor.isa_cn_blt_3_2ne1v7riu1l11_dw2hl_contact_state_p_2_2"
+  ],
+  "31ae92d8a163d77f8d6a5741c0d1b89c": [
+    "button.philips_cn_1061200910_lite_toggle_a_2_1",
+    "button.philips_cn_1061200910_lite_brightness_down_a_3_1",
+    "button.philips_cn_1061200910_lite_brightness_up_a_3_2",
+    "event.philips_cn_1061200910_lite_notify_you_e_3_1",
+    "light.philips_cn_1061200910_lite_s_2",
+    "number.philips_cn_1061200910_lite_dvalue_p_3_1",
+    "number.philips_cn_1061200910_lite_notify_time_p_3_3",
+    "switch.philips_cn_1061200910_lite_notify_switch_p_3_2",
+    "switch.philips_cn_1061200910_lite_night_light_en_p_3_4"
+  ],
+  "e2bf03e9b274e88f9e7b6852d1e2c90d": [
+    "button.philips_cn_1061201010_lite_toggle_a_2_1",
+    "button.philips_cn_1061201010_lite_brightness_down_a_3_1",
+    "button.philips_cn_1061201010_lite_brightness_up_a_3_2",
+    "event.philips_cn_1061201010_lite_notify_you_e_3_1",
+    "light.philips_cn_1061201010_lite_s_2",
+    "number.philips_cn_1061201010_lite_dvalue_p_3_1",
+    "number.philips_cn_1061201010_lite_notify_time_p_3_3",
+    "switch.philips_cn_1061201010_lite_notify_switch_p_3_2",
+    "switch.philips_cn_1061201010_lite_night_light_en_p_3_4"
+  ],
+  "ac5c6e84654cf19a5f91d3d36d0ff05b": [
+    "button.lumi_cn_551385025_mcn001_identify_a_20_1",
+    "event.lumi_cn_551385025_mcn001_network_changed_e_2_1",
+    "event.lumi_cn_551385025_mcn001_click_e_4_1",
+    "event.lumi_cn_551385025_mcn001_double_click_e_4_2",
+    "event.lumi_cn_551385025_mcn001_long_press_e_4_3",
+    "event.lumi_cn_551385025_mcn001_event_unbind_e_7_1",
+    "number.lumi_cn_551385025_mcn001_indicator_brightness_p_6_3",
+    "select.lumi_cn_551385025_mcn001_status_p_6_1",
+    "select.lumi_cn_551385025_mcn001_status_p_7_1",
+    "sensor.lumi_cn_551385025_mcn001_access_mode_p_2_1",
+    "sensor.lumi_cn_551385025_mcn001_ip_address_p_2_2",
+    "sensor.lumi_cn_551385025_mcn001_wifi_ssid_p_2_3",
+    "sensor.lumi_cn_551385025_mcn001_access_mode_p_2_5",
+    "text.lumi_cn_551385025_mcn001_effective_time_p_6_2"
+  ],
+  "21ab4b42c3e6a3fb27f93385082d4075": [
+    "button.xiaomi_cn_701074704_l15a_stop_alarm_a_6_1",
+    "button.xiaomi_cn_701074704_l15a_wake_up_a_7_1",
+    "button.xiaomi_cn_701074704_l15a_play_radio_a_7_2",
+    "button.xiaomi_cn_701074704_l15a_play_music_a_7_5",
+    "button.xiaomi_cn_701074704_l15a_tv_switchon_a_8_1",
+    "media_player.xiaomi_cn_701074704_l15a",
+    "notify.xiaomi_cn_701074704_l15a_seek_a_3_1",
+    "notify.xiaomi_cn_701074704_l15a_play_text_a_7_3",
+    "notify.xiaomi_cn_701074704_l15a_execute_text_directive_a_7_4",
+    "switch.xiaomi_cn_701074704_l15a_mute_p_4_1"
+  ],
+  "53bea65f446cb0a8150250354cb28a40": [
+    "event.xiaomi_cn_blt_3_1ftnm7360c800_pir1_device_be_reset_e_2_1028",
+    "event.xiaomi_cn_blt_3_1ftnm7360c800_pir1_motion_detected_e_2_1008",
+    "sensor.xiaomi_cn_blt_3_1ftnm7360c800_pir1_no_motion_duration_p_2_1024",
+    "sensor.xiaomi_cn_blt_3_1ftnm7360c800_pir1_illumination_p_2_1005",
+    "sensor.xiaomi_cn_blt_3_1ftnm7360c800_pir1_custom_no_motion_time_p_2_1053",
+    "sensor.xiaomi_cn_blt_3_1ftnm7360c800_pir1_battery_level_p_3_1003"
+  ],
+  "f4cfb76e557dc1b961361465dc39b51d": [
+    "event.xiaomi_cn_blt_3_2gunh8471d911_pir1_device_be_reset_e_2_1028",
+    "event.xiaomi_cn_blt_3_2gunh8471d911_pir1_motion_detected_e_2_1008",
+    "sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_no_motion_duration_p_2_1024",
+    "sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_illumination_p_2_1005",
+    "sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_custom_no_motion_time_p_2_1053",
+    "sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_battery_level_p_3_1003"
+  ],
+  "a5dfc87f668ed2c072472576ed40c62e": [
+    "event.xiaomi_cn_blt_3_3hvoj9582ea22_pir1_device_be_reset_e_2_1028",
+    "event.xiaomi_cn_blt_3_3hvoj9582ea22_pir1_motion_detected_e_2_1008",
+    "sensor.xiaomi_cn_blt_3_3hvoj9582ea22_pir1_no_motion_duration_p_2_1024",
+    "sensor.xiaomi_cn_blt_3_3hvoj9582ea22_pir1_illumination_p_2_1005",
+    "sensor.xiaomi_cn_blt_3_3hvoj9582ea22_pir1_custom_no_motion_time_p_2_1053",
+    "sensor.xiaomi_cn_blt_3_3hvoj9582ea22_pir1_battery_level_p_3_1003"
+  ],
   "164c1a92b8ce9cda0e2a8c13440b4722": [
     "light.yeelink_cn_1162511951_mbulb3_s_2"
   ],
+  "b75d2b03c9dfaebf1f3b9d24551c5833": [
+    "light.yeelink_cn_1162512052_mbulb3_s_2"
+  ],
+  "c86e3c14d0egbfc02g4cae35662d6944": [
+    "light.yeelink_cn_1162512153_mbulb3_s_2"
+  ],
   "df406d66e297203b9cbccd7f7b2b0376": [
     "switch.cuco_cn_269067598_cp1_on_p_2_1"
+  ],
+  "e0517e77f3a8314caeddef8a8c3c1487": [
+    "switch.cuco_cn_269067699_cp1_on_p_2_1"
   ]
 }

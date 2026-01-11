@@ -365,26 +365,32 @@ class VectorDB():
     def get_device_multi_constraints_individual_match_scores(
             self,
             device_id: str,
-            multi_clues: List[List[str]]
+            multi_clues: List[List[str]],
+            topk: int = 3  # 新增：每个线索匹配的前topk个内容
     ) -> Dict[Union[int, str], Dict[str, Any]]:
         """
-        返回单个设备对多个约束条件各自对应的ChromaDB原始相似性距离（调和平均）+ 匹配文档内容
-        说明：ChromaDB距离越小，代表设备与约束条件的匹配度越高；无匹配时返回默认距离1.0+空文档列表
-        :param device_id: 智能家居设备的唯一标识ID（如Home Assistant设备ID）
-        :param multi_clues: 设备匹配的约束条件/定位线索集合，外层列表包含多个独立约束条件，
-                            每个约束条件对应一个内部字符串列表（存储该约束的具体线索内容）
-        :return: Dict[Union[int, str], Dict[str, Any]] - 匹配度结果字典，
-                 键：约束条件的索引（int）或线索组合摘要（str），
+        返回单个设备对多个约束条件的匹配结果：
+        1. 每个约束组内的单个线索各自匹配前topk个内容
+        2. 对约束组内所有线索的匹配结果按文档ID去重
+        说明：ChromaDB距离越小，代表设备与约束条件的匹配度越高；无匹配时返回默认空文档
+        :param device_id: 智能家居设备的唯一标识ID
+        :param multi_clues: 设备匹配的约束条件集合，外层列表=多个约束组，内层列表=单个约束组的具体线索
+        :param topk: 每个线索匹配返回的前topk个内容（默认5）
+        :return: 匹配结果字典，结构：
+                 键：约束组的索引/摘要字符串
                  值：嵌套字典，包含两个字段：
-                     1. harmonic_distance: 对应约束的调和平均原始相似性距离（无匹配返回1.0）
-                     2. matching_documents: 对应约束的匹配文档列表（每个元素为文档详情字典，含doc_id/content/metadata/match_distance）
+                     1. individual_clue_matches: 字典（键=线索，值=该线索匹配的前topk个文档列表）
+                     2. unique_matching_documents: 该约束组所有线索匹配结果去重后的文档列表（含匹配的所有线索）
         """
-        # 步骤1：严格输入校验
+        # 步骤1：严格输入校验（新增topk校验）
         if not device_id:
             print("⚠️  设备ID不能为空")
             return {}
         if not isinstance(multi_clues, list) or len(multi_clues) == 0:
             print("⚠️  约束条件集合multi_clues不能为空，且必须为嵌套列表")
+            return {}
+        if not isinstance(topk, int) or topk <= 0:
+            print("⚠️  topk必须为正整数")
             return {}
 
         # 步骤2：获取设备对应集合（处理集合不存在异常）
@@ -397,123 +403,133 @@ class VectorDB():
             print(f"⚠️  设备ID「{device_id}」对应的集合不存在或获取失败：{e}")
             return {}
 
-        # 步骤3：空集合处理（直接返回所有约束默认距离+空文档列表）
+        # 步骤3：空集合处理（直接返回所有约束默认空结果）
         coll_doc_count = collection.count()
-        default_doc_list = []
         if coll_doc_count == 0:
-            print(f"⚠️  设备ID「{device_id}」对应的集合无文档，返回默认距离+空文档")
+            print(f"⚠️  设备ID「{device_id}」对应的集合无文档，返回空匹配结果")
+            default_unique_docs = [{
+                "doc_id": "",
+                "content": "",
+                "metadata": {},
+                "match_distance": self.default_distance,
+                "matching_clues": []
+            }]
             return {
                 self._get_constraint_key(idx, constraint): {
-                    "harmonic_distance": self.default_distance,
-                    "matching_documents": default_doc_list
+                    "individual_clue_matches": {},
+                    "unique_matching_documents": default_unique_docs
                 }
                 for idx, constraint in enumerate(multi_clues)
             }
 
         # 步骤4：初始化返回结果字典
         match_results = {}
-        # 定义默认文档信息（无匹配时使用）
-        default_doc_info = {
-            "doc_id": "",
-            "content": "",
-            "metadata": {},
-            "match_distance": self.default_distance
-        }
 
-        # 步骤5：遍历每个独立约束条件，调和平均计算距离+提取匹配文档
+        # 步骤5：遍历每个约束组，计算单个线索topk匹配 + 组内去重
         for constraint_idx, constraint_clues in enumerate(multi_clues):
-            # 5.1 单个约束内部线索校验（空线索直接返回默认值+空文档）
+            # 5.1 空线索组处理
             if not isinstance(constraint_clues, list) or len(constraint_clues) == 0:
                 constraint_key = self._get_constraint_key(constraint_idx, constraint_clues)
                 match_results[constraint_key] = {
-                    "harmonic_distance": self.default_distance,
-                    "matching_documents": default_doc_list
+                    "individual_clue_matches": {},
+                    "unique_matching_documents": [{
+                        "doc_id": "",
+                        "content": "",
+                        "metadata": {},
+                        "match_distance": self.default_distance,
+                        "matching_clues": []
+                    }]
                 }
                 continue
 
-            # 5.2 构建查询过滤条件（复用现有device_id_clues标签，保持一致性）
+            # 5.2 构建查询过滤条件（保持原有逻辑）
             where_filter = {"device_id_clues": {"$eq": True}}
 
-            # 5.3 初始化当前约束的距离列表和文档列表（去重存储）
-            constraint_min_distances = []
-            constraint_matching_docs = []
-            doc_id_set = set()  # 用于文档去重，避免重复添加同一文档
+            # 5.3 初始化存储：
+            # - individual_clue_matches: 每个线索的topk匹配结果
+            # - doc_id_to_info: 按doc_id去重，记录文档匹配的所有线索
+            individual_clue_matches = {}
+            doc_id_to_info = {}
 
             for clue in constraint_clues:
                 if not clue:  # 空线索跳过
+                    individual_clue_matches[clue] = []
                     continue
+
                 try:
-                    # 5.4 查询该线索与集合内所有文档的匹配结果（含文档详情）
+                    # 5.4 查询该线索的前topk个匹配结果（核心修改：n_results=topk）
                     query_results = collection.query(
                         query_texts=[clue],
                         where=where_filter,
-                        n_results=coll_doc_count,
-                        include=["documents", "metadatas", "distances"]  # 提取文档内容和元数据
+                        n_results=topk,  # 只取前topk个，替代原有的全量查询
+                        include=["documents", "metadatas", "distances"]
                     )
 
-                    # 5.5 提取查询结果中的字段
+                    # 5.5 提取查询结果字段
                     doc_ids = query_results["ids"][0]
                     doc_contents = query_results["documents"][0]
                     doc_metadatas = query_results["metadatas"][0]
                     clue_distances = query_results["distances"][0]
 
-                    # 5.6 无匹配结果处理
-                    if not clue_distances or len(clue_distances) == 0:
-                        continue
+                    # 5.6 整理该线索的topk匹配结果
+                    clue_topk_matches = []
+                    for i in range(len(doc_ids)):
+                        # 防止索引越界
+                        doc_id = doc_ids[i] if i < len(doc_ids) else ""
+                        doc_content = doc_contents[i] if i < len(doc_contents) else ""
+                        doc_metadata = doc_metadatas[i] if i < len(doc_metadatas) else {}
+                        match_distance = clue_distances[i] if i < len(clue_distances) else self.default_distance
+                        safe_distance = max(match_distance, self.epsilon)
 
-                    # 5.7 找到该线索的最小距离对应文档（最优匹配）
-                    min_clue_distance = min(clue_distances)
-                    min_distance_idx = clue_distances.index(min_clue_distance)
-                    # 保证距离>0，避免后续调和平均除零
-                    safe_min_distance = max(min_clue_distance, self.epsilon)
-
-                    # 5.8 提取最优文档详情（避免索引越界）
-                    doc_id = doc_ids[min_distance_idx] if (doc_ids and len(doc_ids) > min_distance_idx) else ""
-                    doc_content = doc_contents[min_distance_idx] if (
-                                doc_contents and len(doc_contents) > min_distance_idx) else ""
-                    doc_metadata = doc_metadatas[min_distance_idx] if (
-                                doc_metadatas and len(doc_metadatas) > min_distance_idx) else {}
-
-                    # 5.9 文档去重：仅添加未出现过的文档
-                    if doc_id not in doc_id_set and doc_id:
-                        doc_id_set.add(doc_id)
-                        single_doc_info = {
+                        # 单个文档信息
+                        doc_info = {
                             "doc_id": doc_id,
                             "content": doc_content,
                             "metadata": doc_metadata,
-                            "match_distance": safe_min_distance,
-                            "matching_clue": clue  # 标注该文档匹配的具体线索，便于追溯
+                            "match_distance": safe_distance
                         }
-                        constraint_matching_docs.append(single_doc_info)
+                        clue_topk_matches.append(doc_info)
 
-                    # 5.10 存入该线索的最小安全距离
-                    constraint_min_distances.append(safe_min_distance)
+                        # 5.7 去重逻辑：按doc_id合并，记录匹配的所有线索
+                        if doc_id and doc_id != "":
+                            if doc_id not in doc_id_to_info:
+                                doc_id_to_info[doc_id] = {
+                                    "doc_id": doc_id,
+                                    "content": doc_content,
+                                    "metadata": doc_metadata,
+                                    "match_distance": safe_distance,
+                                    "matching_clues": [clue]  # 记录匹配到的线索
+                                }
+                            else:
+                                # 追加匹配线索（避免重复）
+                                if clue not in doc_id_to_info[doc_id]["matching_clues"]:
+                                    doc_id_to_info[doc_id]["matching_clues"].append(clue)
+
+                    # 5.8 保存该线索的topk结果
+                    individual_clue_matches[clue] = clue_topk_matches
 
                 except Exception as e:
                     print(f"⚠️  约束{constraint_idx}线索「{clue}」查询失败：{e}")
+                    individual_clue_matches[clue] = []
                     continue
 
-            # 5.11 调和平均计算当前约束的最终原始距离
-            if constraint_min_distances:
-                n_valid_clues = len(constraint_min_distances)
-                reciprocal_sum = sum(1.0 / d for d in constraint_min_distances)
-                if reciprocal_sum > 0:
-                    constraint_harmonic_distance = n_valid_clues / reciprocal_sum
-                else:
-                    constraint_harmonic_distance = self.default_distance
-            else:
-                constraint_harmonic_distance = self.default_distance
-                # 无有效距离时，添加默认文档信息（便于调用者识别无匹配）
-                constraint_matching_docs.append(default_doc_info)
+            # 5.9 处理去重后的文档列表（无匹配则返回默认值）
+            unique_matching_docs = list(doc_id_to_info.values()) if doc_id_to_info else [{
+                "doc_id": "",
+                "content": "",
+                "metadata": {},
+                "match_distance": self.default_distance,
+                "matching_clues": []
+            }]
 
-            # 5.12 构建约束键，存入完整结果（距离+文档列表，保留4位小数）
+            # 5.10 构建约束组结果（移除调和平均距离，新增单个线索/去重结果）
             constraint_key = self._get_constraint_key(constraint_idx, constraint_clues)
             match_results[constraint_key] = {
-                "harmonic_distance": round(constraint_harmonic_distance, 4),
-                "matching_documents": constraint_matching_docs
+                "individual_clue_matches": individual_clue_matches,
+                "unique_matching_documents": unique_matching_docs
             }
 
-        # 步骤6：返回最终完整结果
+        # 步骤6：返回最终结果
         return match_results
 
     # 私有辅助函数：生成约束条件的唯一键（索引/摘要）
@@ -801,11 +817,10 @@ def get_device_constraints_individual_match_text(
     :param device_id: 智能家居设备的唯一标识ID（如Home Assistant设备ID）。
     :param multi_clues: 设备匹配的约束条件/定位线索集合，外层列表包含多个独立约束条件，每个约束条件对应一个内部字符串列表（存储该约束的具体线索内容）。
     """
-    # todo 核验VectorDB里面的实现，调用整理结果后返回
     search_result=VECTORDB.get_device_multi_constraints_individual_match_scores(device_id=device_id,multi_clues=multi_clues)
     ans_str_list = []
     for key, val in search_result.items():
-        content_str = ",".join([item["content"] for item in val["matching_documents"]])
+        content_str = ",".join([item["content"] for item in val["unique_matching_documents"]])
         clue_result_str = f"对于线索/约束：{key},匹配到的内容为:{content_str})"
         ans_str_list.append(clue_result_str)
 
@@ -824,6 +839,20 @@ def get_device_all_states()->str:
     return "\n".join(ans_str_list)
 
 @tool
+def get_devices_states(device_ids:list[str])->str:
+    """
+        获取可以从给定设备列表，其各自能查询到的所有状态类型
+    """
+    all_collections = VECTORDB.client.list_collections()
+    ans_str_list = []
+    for collection in all_collections:
+        device_id = collection.name
+        if device_id not in device_ids:
+            continue
+        ans_str_list.append(VECTORDB.get_device_states_combined(device_id=device_id))
+    return "\n".join(ans_str_list)
+
+@tool
 def get_device_all_capabilities()->str:
     """
     获取可以从家中所有设备，其各自能查询到的所有能力信息
@@ -834,10 +863,21 @@ def get_device_all_capabilities()->str:
         device_id = collection.name
         ans_str_list.append(VECTORDB.get_device_capabilities_combined(device_id=device_id))
     return "\n".join(ans_str_list)
-
-
 @tool
-def get_device_all_usage_habits(device_id: str):
+def get_devices_capabilities(device_ids:list[str])->str:
+    """
+    获取可以从给定设备列表，其各自能查询到的所有能力信息
+    """
+    all_collections = VECTORDB.client.list_collections()
+    ans_str_list = []
+    for collection in all_collections:
+        device_id = collection.name
+        if device_id not in device_ids:
+            continue
+        ans_str_list.append(VECTORDB.get_device_capabilities_combined(device_id=device_id))
+    return "\n".join(ans_str_list)
+@tool
+def get_device_all_usage_habits()->str:
     """
     获取可以从家中所有设备，其各自能查询到的所有使用习惯
     """
@@ -848,7 +888,19 @@ def get_device_all_usage_habits(device_id: str):
         ans_str_list.append(VECTORDB.get_device_usage_habits_combined(device_id=device_id))
     return "\n".join(ans_str_list)
 
-
+@tool
+def get_devices_usage_habits(device_ids:list[str])->str:
+    """
+    取可以从给定设备列表，其各自能查询到的所有使用习惯
+    """
+    all_collections = VECTORDB.client.list_collections()
+    ans_str_list = []
+    for collection in all_collections:
+        device_id = collection.name
+        if device_id not in device_ids:
+            continue
+        ans_str_list.append(VECTORDB.get_device_usage_habits_combined(device_id=device_id))
+    return "\n".join(ans_str_list)
 
 def test_device_multi_constraints_match_pydantic():
     """
@@ -968,16 +1020,14 @@ def test_device_multi_constraints_match_pydantic():
 if __name__ == "__main__":
     # test_device_multi_constraints_match_pydantic()
     # VECTORDB.print_all_collections_content()
-    device_id="164c1a92b8ce9cda0e2a8c13440b4722"
-    multi_clues=[['床边']]
-    search_result = VECTORDB.get_device_multi_constraints_individual_match_scores(device_id=device_id,
-                                                                                  multi_clues=multi_clues)
+    device_ids=["164c1a92b8ce9cda0e2a8c13440b4722"]
+    all_collections = VECTORDB.client.list_collections()
     ans_str_list = []
-    for key, val in search_result.items():
-        content_str = ",".join([item["content"] for item in val["matching_documents"]])
-        clue_result_str = f"对于线索/约束：{key},匹配到的内容为:{content_str})"
-        ans_str_list.append(clue_result_str)
-
+    for collection in all_collections:
+        device_id = collection.name
+        if device_id not in device_ids:
+            continue
+        ans_str_list.append(VECTORDB.get_device_states_combined(device_id=device_id))
     print("\n".join(ans_str_list))
     # result=VECTORDB.search_topK_device_by_clues(clues=["灯泡","调色温"],topk=3)
     # print(format_collections_to_string(result))

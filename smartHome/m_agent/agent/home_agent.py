@@ -18,7 +18,8 @@ from pydantic import BaseModel, Field
 from typing import List  # 推荐导入List，规范类型注解
 
 from smartHome.m_agent.memory.vector_device import get_device_constraints_individual_match_text, \
-    get_device_all_states, get_device_all_capabilities, get_device_all_usage_habits
+    get_device_all_states, get_device_all_capabilities, get_device_all_usage_habits, get_devices_states, \
+    get_devices_capabilities, get_devices_usage_habits
 
 
 class DeviceInfo(BaseModel):
@@ -112,8 +113,8 @@ def node_filter_1(state:SmartHomeAgentState)-> Command[Literal["filter_2_node", 
     :param state:
     :return:
     """
-    json_str_compact="""{"devices":[{"device_id":"164c1a92b8ce9cda0e2a8c13440b4722","device_name":"灯泡","device_reason":"支持打开灯光、关闭灯光等操作，能完成开床边灯的任务"}]}"""
-    content=[AIMessage(content=json_str_compact)]
+    json_str_compact = """{"devices":[{"device_id":"ac5c6e84654cf19a5f91d3d36d0ff05b","device_name":"小米智能多模网关2","device_reason":"该设备能获取网络状态、IP地址、WiFi网络名称等网络相关信息，可用于查看网络状况"}]}"""
+    content = [AIMessage(content=json_str_compact)]
     return Command(
         update={"messages": content,
                 "first_filter_devices": json_str_compact},  # Store raw results or error
@@ -158,6 +159,14 @@ def node_filter_2(state:SmartHomeAgentState)-> Command[Literal["planner_node", E
     :return:
     """
     # 不需要工具，从记忆里获取信息，进行初筛 和 细筛
+    json_str_compact = """<|FunctionCallEnd|>[{"device_id":"ac5c6e84654cf19a5f91d3d36d0ff05b","reason":"该设备能获取网络状态、IP地址、WiFi网络名称等网络相关信息，可用于查看网络状况"}]"""
+
+    content = [AIMessage(content=json_str_compact)]
+    return Command(
+        update={"messages": content,
+                "second_filter_devices": json_str_compact},  # Store raw results or error
+        goto="planner_node"
+    )
 
     prompt=f"""
     【任务】：{state["command"]}
@@ -180,11 +189,12 @@ def node_filter_2(state:SmartHomeAgentState)-> Command[Literal["planner_node", E
     msg_content = "\n" + "\n".join(map(repr, result["messages"]))
     GLOBALCONFIG.logger.info(msg_content)
 
-    deviceInfoList = result["structured_response"]
-    # 无缩进（紧凑格式，适合传输/存储）
-    json_str_compact = deviceInfoList.model_dump_json()
-    # 带缩进（美化格式，适合调试/查看）
-    json_str_pretty = deviceInfoList.model_dump_json(indent=4)
+    # deviceInfoList = result["structured_response"]
+    # # 无缩进（紧凑格式，适合传输/存储）
+    # json_str_compact = deviceInfoList.model_dump_json()
+    # # 带缩进（美化格式，适合调试/查看）
+    # json_str_pretty = deviceInfoList.model_dump_json(indent=4)
+    json_str_compact=result["messages"][-1].content
 
     content = [AIMessage(content=json_str_compact)]
     return Command(
@@ -200,11 +210,12 @@ def node_planner(state:SmartHomeAgentState)-> Command[Literal["deliver_node", EN
     :return:
     """
     prompt=f"""
+    【任务】：{state["command"]}
     【候选设备集】：{state["second_filter_devices"]}
-    根据设备能力和获取状态、当前状态、使用习惯，规划出应该让每个设备做什么
+    根据任务及设备能力和状态类型、使用习惯，规划出应该让每个设备做什么
     """
     # todo 改成从设备列表获取 设备能力和获取状态
-    agent = create_agent(model=get_llm(), tools=[get_device_all_states,get_device_all_capabilities,get_device_all_usage_habits,executor_planning],)
+    agent = create_agent(model=get_llm(), tools=[get_devices_states,get_devices_capabilities,get_devices_usage_habits,executor_planning],)
     result = agent.invoke({
         "messages": [
             {"role": "system", "content": prompt},
@@ -244,8 +255,8 @@ agent = agent_builder.compile()
 
 # Test with an urgent billing issue
 initial_state = {
-    "command": "开床边灯",
-    "messages": [HumanMessage(content="开床边灯")]
+    "command": "网络状况",
+    "messages": [HumanMessage(content="网络状况")]
 }
 result = agent.invoke(initial_state)
 for m in result["messages"]:

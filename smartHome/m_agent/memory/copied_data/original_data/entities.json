@@ -401,7 +401,7 @@
   },
   {
     "entity_id": "button.philips_cn_1061200910_lite_toggle_a_2_1",
-    "state": "unavailable",
+    "state": "2025-10-27T11:25:38.188721+00:00",
     "attributes": {
       "friendly_name": "米家智能台灯Lite  灯 开关状态切换"
     },
@@ -416,7 +416,7 @@
   },
   {
     "entity_id": "button.philips_cn_1061200910_lite_brightness_down_a_3_1",
-    "state": "unavailable",
+    "state": "2025-10-27T11:25:38.188721+00:00",
     "attributes": {
       "friendly_name": "米家智能台灯Lite * 个性化功能 亮度-"
     },
@@ -431,7 +431,7 @@
   },
   {
     "entity_id": "button.philips_cn_1061200910_lite_brightness_up_a_3_2",
-    "state": "unavailable",
+    "state": "2025-10-27T11:25:38.188751+00:00",
     "attributes": {
       "friendly_name": "米家智能台灯Lite * 个性化功能 亮度+"
     },
@@ -536,7 +536,7 @@
   },
   {
     "entity_id": "event.philips_cn_1061200910_lite_notify_you_e_3_1",
-    "state": "unavailable",
+    "state": "unknown",
     "attributes": {
       "event_types": [
         "推送休息事件"
@@ -691,29 +691,32 @@
     }
   },
   {
-    "entity_id": "light.philips_cn_1061200910_lite_s_2",
-    "state": "unavailable",
-    "attributes": {
-      "effect_list": [
-        "mode 0",
-        "mode 1",
-        "mode 2"
-      ],
-      "supported_color_modes": [
-        "brightness"
-      ],
-      "friendly_name": "米家智能台灯Lite  灯",
-      "supported_features": 4
-    },
+	"entity_id": "light.philips_cn_1061200910_lite_s_2",
+	"state": "on",
+	"attributes": {
+		"effect_list": [
+			"mode 0",
+			"mode 1",
+			"mode 2"
+		],
+		"supported_color_modes": [
+			"brightness"
+		],
+		"effect": "mode 1",
+		"color_mode": "brightness",
+		"brightness": 3,
+		"friendly_name": "卧室的米家智能台灯Lite  灯",
+		"supported_features": 4
+	},
     "last_changed": "2025-10-27T11:25:38.188829+00:00",
     "last_reported": "2025-10-27T11:25:38.188829+00:00",
     "last_updated": "2025-10-27T11:25:38.188829+00:00",
-    "context": {
-      "id": "01K8JPN9TVPGJM6YJP3CBB4MNM",
-      "parent_id": null,
-      "user_id": "b1194095a8dd412f9fd16b8ae0689951"
-    }
-  },
+	"context": {
+		"id": "01KEP0S242MJCCG8Y0KKZGWPAD",
+		"parent_id": null,
+		"user_id": null
+	}
+},
   {
     "entity_id": "light.yeelink_cn_1162511951_mbulb3_s_2",
     "state": "on",
@@ -827,7 +830,7 @@
   },
   {
     "entity_id": "number.philips_cn_1061200910_lite_dvalue_p_3_1",
-    "state": "unavailable",
+    "state": "0",
     "attributes": {
       "min": 0,
       "max": 21600,
@@ -848,7 +851,7 @@
   },
   {
     "entity_id": "number.philips_cn_1061200910_lite_notify_time_p_3_3",
-    "state": "unavailable",
+    "state": "40",
     "attributes": {
       "min": 1,
       "max": 120,
@@ -1105,7 +1108,7 @@
   },
   {
     "entity_id": "switch.philips_cn_1061200910_lite_notify_switch_p_3_2",
-    "state": "unavailable",
+    "state": "off",
     "attributes": {
       "device_class": "switch",
       "friendly_name": "米家智能台灯Lite * 个性化功能 开启/关闭视疲劳提醒功能 "
@@ -1121,7 +1124,7 @@
   },
   {
     "entity_id": "switch.philips_cn_1061200910_lite_night_light_en_p_3_4",
-    "state": "unavailable",
+    "state": "on",
     "attributes": {
       "device_class": "switch",
       "friendly_name": "米家智能台灯Lite * 个性化功能 开启/关闭夜间模式"

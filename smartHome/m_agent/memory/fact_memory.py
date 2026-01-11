@@ -299,6 +299,10 @@ class SmartHomeMemory():
                         }
                     ]
                 })
+                # 日志打印
+                msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+                GLOBALCONFIG.memory_init_logger.info(msg_content)
+
                 device_fact = result["structured_response"]
             else:
                 device_fact = DeviceFact(
@@ -313,8 +317,9 @@ class SmartHomeMemory():
             device_fact_dict[device_id]=device_fact
 
         self.device_fact = device_fact_dict
+        self._save_init_device_fact_to_json(device_fact_dict, self.device_fact_save_path)
         self._save_init_device_fact_to_vector_db()
-        self._save_init_device_fact_to_json(device_fact_dict,self.device_fact_save_path)
+
 
     def init_memory_for_entity(self):
         """
@@ -350,7 +355,7 @@ class SmartHomeMemory():
                     2. 该实体**不支持的功能**（需明确排除的行为，如“该传感器仅支持读取状态，不支持任何主动操作”“空调不支持调节湿度”）。
 
                     ### 步骤4：输出结构化信息
-                    最终输出严格符合以下JSON格式（需包含功能分析结果，字段与EntityFact模型对齐）：
+                    最终输出严格符合JSON格式（需包含功能分析结果，字段与EntityFact模型对齐）：
 
                     【entity】
                     {entity_detail}
@@ -371,6 +376,11 @@ class SmartHomeMemory():
                             }
                         ]
                     })
+
+                    # 日志打印
+                    msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+                    GLOBALCONFIG.memory_init_logger.info(msg_content)
+
                     # 解析并输出提取结果（适配EntityFact字段）
                     entity_fact = result["structured_response"]
                 else:
@@ -553,7 +563,20 @@ def get_device_all_entities_states(device_id: str):
     :param device_id: 设备ID
     :return:
     """
-    pass
+    # collection = VECTORDB.client.get_collection(
+    #     name=device_id,
+    #     embedding_function=VECTORDB.embedding_func
+    # )
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, "temp_output","entities_fact.json")
+    with open(file_path, 'r', encoding='utf-8') as f:
+        # json.load() 将文件对象解析为Python字典/列表
+        data = json.load(f)
+    ans_str_list = []
+    for entities in data[device_id]:
+        e_str=f"{entities['entity_id']}({entities['friendly_name']}):{'、'.join(entities['states'])}"
+        ans_str_list.append(e_str)
+    return "\n".join(ans_str_list)
 
 @tool
 def get_device_all_entities_capabilities(device_id: str):
@@ -562,14 +585,18 @@ def get_device_all_entities_capabilities(device_id: str):
     :param device_id: 设备ID
     :return:
     """
-    pass
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, "temp_output", "entities_fact.json")
+    with open(file_path, 'r', encoding='utf-8') as f:
+        # json.load() 将文件对象解析为Python字典/列表
+        data = json.load(f)
+    ans_str_list = []
+    for entities in data[device_id]:
+        e_str = f"{entities['entity_id']}({entities['friendly_name']}):{'、'.join(entities['capabilities'])}"
+        ans_str_list.append(e_str)
+    return "\n".join(ans_str_list)
 
 if __name__ == "__main__":
-    # SmartHomeMemory().init_memory_by_deviceInfo()
-    dialogue_record="""
-    user:打开床边灯
-    ai:候选设备集中设备ID为“164c1a92b8ce9cda0e2a8c13440b4722”的灯泡，通过get_device_constraints_individual_match_text工具查询其对“床边”约束条件的匹配内容，返回结果为“灯泡 灯)”，未明确说明该灯泡位于床边，暂无法确定其是否满足“床边灯”的约束条件。
-    user:没错，就是 它
-    """
-    SMARTHOMEMEMORY.extract_and_update(dialogue_record)
+    # SMARTHOMEMEMORY.init_memory_for_entity()
+    # SMARTHOMEMEMORY.init_memory_for_device()
     pass
