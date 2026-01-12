@@ -96,6 +96,56 @@ def setup_logger(
 
     return logger
 
+def setup_dynamic_indent_logger(logger_name: str, log_file_path: str):
+    """
+    配置支持动态缩进的日志器，兼顾控制台输出和文件持久化
+    """
+    # 1. 获取当前配置文件(xx.py)的绝对路径和所在目录
+    current_file_path = os.path.abspath(__file__)
+    config_dir = os.path.dirname(current_file_path)
+
+    # 2. 校验传入的log_file_path：禁止绝对路径、禁止上级目录（../）
+    if os.path.isabs(log_file_path):
+        raise ValueError(f"禁止传入绝对路径！请传入相对路径（基于{config_dir}）")
+    if ".." in log_file_path:
+        raise ValueError(f"禁止传入包含'../'的路径！日志文件必须放在{config_dir}目录内")
+
+    # 3. 拼接最终路径（强制在config_dir下），并标准化路径（处理./、//等）
+    final_log_file_path = os.path.normpath(os.path.join(config_dir, log_file_path))
+
+    # 4. 自动创建日志文件所在的多级目录（关键：处理logs/order/info.log这类多级路径）
+    log_dir = os.path.dirname(final_log_file_path)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+        print(f"自动创建日志目录：{log_dir}")
+
+    # 2. 创建日志器，设置日志级别
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False  # 避免重复输出
+
+    # 3. 定义格式化器：引用自定义缩进属性`indent`，实现动态缩进
+    # 格式说明：%(indent)s 会自动替换为传入的缩进字符串，后续跟核心日志消息
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(indent)s%(message)s",  # 关键：%(indent)s 动态缩进
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    # 4. 配置控制台处理器（输出到终端）
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
+    # 5. 配置文件处理器（持久化到日志文件）
+    file_handler = logging.FileHandler(final_log_file_path, encoding="utf-8")  # 指定utf-8避免中文乱码
+    file_handler.setFormatter(formatter)
+
+    # 6. 给日志器添加处理器
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger
+
+
 # ---------------------- 测试示例 ----------------------
 if __name__ == "__main__":
     # 合法调用：传入文件名（推荐）
@@ -108,3 +158,11 @@ if __name__ == "__main__":
     # logger3 = get_logger("test3", "/tmp/order.log")
     # 非法调用：传入上级路径（会抛出异常并提示）
     # logger4 = get_logger("test4", "../logs/app.log")
+    nested_logger=setup_dynamic_indent_logger(logger_name="dynamic_indent_logger",log_file_path="logs/nested_agent.log")
+    nested_logger.info("主Agent：开始执行嵌套任务", extra={"indent": ""})
+    # 层级1：4个空格缩进
+    nested_logger.info("子Agent：接收主Agent任务，准备调用模型", extra={"indent": "    "})
+    # 层级2：8个空格缩进
+    nested_logger.info("孙子Agent：接收子Agent任务，执行工具调用", extra={"indent": "        "})
+
+

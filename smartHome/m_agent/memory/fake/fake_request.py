@@ -2,7 +2,7 @@ import json
 import os
 from typing import Union, Dict, List
 
-from langchain.tools import tool
+
 
 # 获取当前 Python 文件所在目录的绝对路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,10 +16,10 @@ services_path = os.path.join(parent_dir, "copied_data","domains_services.json")
 entities = json.load(open(entities_path, "r", encoding="utf-8"))
 services = json.load(open(services_path, "r", encoding="utf-8"))
 
-@tool
+
 def fake_get_services_by_domain(domain:str):
     """
-    获取服务
+    获取domain下的所有服务
     :param domain:
     :return:
     """
@@ -27,17 +27,17 @@ def fake_get_services_by_domain(domain:str):
         if domain == service["domain"]:
             return service
     return None
-@tool
+
 def fake_get_all_entities():
     """
     获取所有实体
     :return:
     """
     return entities
-@tool
+
 def fake_get_states_by_entity_id(entity_id):
     """
-    获取某个实体
+    获取实体当前的json数据
     :param entity_id:
     :return:
     """

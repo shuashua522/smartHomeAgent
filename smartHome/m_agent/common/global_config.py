@@ -1,7 +1,7 @@
 import configparser
 import os
 
-from smartHome.m_agent.common.logger import get_logger
+from smartHome.m_agent.common.logger import get_logger, setup_dynamic_indent_logger
 
 
 class Global_Config():
@@ -11,9 +11,16 @@ class Global_Config():
         self.model = self.configparser.get(self.provider, 'model')
         self.base_url = self.configparser.get(self.provider, 'base_url')
         self.api_key = self.configparser.get(self.provider, 'api_key')
+
+        # 日志
         self.logger = get_logger("my_test","logs/my_test.log")
         self.memory_logger= get_logger("memory_update","logs/memory_update.log")
         self.memory_init_logger= get_logger("memory_init","logs/memory_init.log")
+        # 嵌套agent多层次日志打印
+        # self.nested_level=-1
+        self.nested_agent_map={}
+        self.nested_logger=setup_dynamic_indent_logger(logger_name="dynamic_indent_logger",log_file_path="logs/nested_agent.log")
+
         # env取值：dev，test，prod
         self.env="test"
     def load_configparser(self):
@@ -34,5 +41,35 @@ class Global_Config():
         os.environ["LANGSMITH_API_KEY"] = llm_configparser.get('LangSmith', 'langsmith_api_key')
 
         return llm_configparser
+
+    def print_nested_log(self, message: str,level: int=-1):
+        """
+        封装嵌套日志打印函数，根据层级自动计算缩进
+        :param level: 嵌套层级（0=无缩进，1=4个空格，2=8个空格...）
+        :param message: 日志消息
+        """
+        if(level==-1):
+            level=self.get_nested_level()
+        indent_space = "    " * level  # 每级缩进4个空格，符合Python编码规范
+        self.nested_logger.info(message, extra={"indent": indent_space})
+
+    def add_agent_name(self, agent_name):
+        """添加字符串，存在则计数+1，不存在则新增key（计数=1）"""
+        if agent_name in self.nested_agent_map:
+            self.nested_agent_map[agent_name] += 1
+        else:
+            self.nested_agent_map[agent_name] = 1
+
+    def delete_agent_name(self, agent_name):
+        """删除字符串，计数-1；计数为0则删除该key"""
+        if agent_name not in self.nested_agent_map:
+            return
+        self.nested_agent_map[agent_name] -= 1
+        if self.nested_agent_map[agent_name] == 0:
+            del self.nested_agent_map[agent_name]
+
+    def get_nested_level(self):
+        """返回字典中当前的key数量-1"""
+        return len(self.nested_agent_map)-1
 
 GLOBALCONFIG=Global_Config()

@@ -1,22 +1,12 @@
 import datetime
 import json
 import re
+import traceback
 from functools import wraps
 from typing import Union, Dict, List
-from langchain.tools import tool
 from smartHome.m_agent.memory.fake.fake_request import fake_get_states_by_entity_id
 
-@tool
-def fake_execute_action_by_entity_id(domain, service, body, ) -> Union[Dict, List]:
-    """
-    执行操作
-    :param domain:
-    :param service:
-    :param body:
-    :return:
-    """
-    result = fake_execute_domain_service_by_entity_id(domain, service, body)
-    return result
+
 
 """
 饰器的执行顺序遵循 “就近原则”：
@@ -42,8 +32,10 @@ def exception_return(response):
             try:
                 # 尝试执行原函数
                 return func(*args, **kwargs)
-            except Exception:
-                # 发生任何异常时，返回指定的response
+            except  Exception as e:  # 关键：as e 绑定具体异常实例到变量e
+                # 打印捕获到的具体异常实例（包含错误描述）
+                print("发生异常：", e)
+                traceback.print_exc()
                 return response
         return wrapper
     return decorator
@@ -697,3 +689,12 @@ def service_notify_send_message(body: Dict) -> Dict:
 
 参照这个文件中的代码模拟实现这个实体的homeassitant操作效果
 """
+
+if __name__ == "__main__":
+    # {'domain': 'light', 'service': 'turn_off', 'body': {'entity_id': 'light.yeelink_cn_1162511951_mbulb3_s_2'}}
+    domain='light'
+    service='turn_off'
+    body="""{"entity_id": "light.yeelink_cn_1162511951_mbulb3_s_2"}"""
+    body_dict = json.loads(body)
+    result = fake_execute_domain_service_by_entity_id(domain, service, body)
+    print(result)

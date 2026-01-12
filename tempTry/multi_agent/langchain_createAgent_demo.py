@@ -17,14 +17,14 @@ def get_weather() -> str:
     location="广州"
     return f"Weather in {location}: Sunny, 72°F"
 
-agent = create_agent(model=get_llm(), tools=[search, get_weather])
-result = agent.invoke({
-    "messages": [{"role": "system", "content": "广州天气怎么样"}]
-})
-
-# # content = [AIMessage(content="广州天气怎么样")]
-msg_content = "\n" + "\n".join(map(repr, result["messages"]))
-GLOBALCONFIG.logger.info(msg_content)
+# agent = create_agent(model=get_llm(), tools=[search, get_weather])
+# result = agent.invoke({
+#     "messages": [{"role": "system", "content": "广州天气怎么样"}]
+# })
+#
+# # # content = [AIMessage(content="广州天气怎么样")]
+# msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+# GLOBALCONFIG.logger.info(msg_content)
 # print(result)
 
 # 创建一个LangChain SystemMessage实例
@@ -41,3 +41,6 @@ print(str(sys_msg))
 # 2. 调用repr()（对应print(result)中列表元素的处理逻辑）
 print("\n=== 调用repr()（直接print(result)的单个元素）===")
 print(repr(sys_msg))
+
+GLOBALCONFIG.print_nested_log(1,repr(sys_msg))
+GLOBALCONFIG.print_nested_log(2,repr(sys_msg))

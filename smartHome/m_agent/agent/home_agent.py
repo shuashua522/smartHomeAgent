@@ -10,6 +10,8 @@ from typing_extensions import TypedDict, Annotated
 import operator
 
 from smartHome.m_agent.agent.executor_agent import executor_planning
+from smartHome.m_agent.agent.langchain_middleware import AgentContext, log_before, log_response, log_before_agent, \
+    log_after_agent
 from smartHome.m_agent.common.get_llm import get_llm
 from smartHome.m_agent.common.global_config import GLOBALCONFIG
 from smartHome.m_agent.memory.fact_memory import SMARTHOMEMEMORY
@@ -113,7 +115,7 @@ def node_filter_1(state:SmartHomeAgentState)-> Command[Literal["filter_2_node", 
     :param state:
     :return:
     """
-    json_str_compact = """{"devices":[{"device_id":"ac5c6e84654cf19a5f91d3d36d0ff05b","device_name":"小米智能多模网关2","device_reason":"该设备能获取网络状态、IP地址、WiFi网络名称等网络相关信息，可用于查看网络状况"}]}"""
+    json_str_compact = """{"devices":[{"device_id":"c86e3c14d0egbfc02g4cae35662d6944","device_name":"灯泡 灯","device_reason":"支持开关控制，可关闭"},{"device_id":"164c1a92b8ce9cda0e2a8c13440b4722","device_name":"灯泡  灯","device_reason":"支持开关控制，可关闭"},{"device_id":"b75d2b03c9dfaebf1f3b9d24551c5833","device_name":"灯泡  灯","device_reason":"支持开关控制，可关闭"},{"device_id":"31ae92d8a163d77f8d6a5741c0d1b89c","device_name":"米家智能台灯Lite","device_reason":"支持开关控制，可关闭"},{"device_id":"e2bf03e9b274e88f9e7b6852d1e2c90d","device_name":"米家智能台灯Lite","device_reason":"支持开关控制，可关闭"}]}"""
     content = [AIMessage(content=json_str_compact)]
     return Command(
         update={"messages": content,
@@ -129,15 +131,20 @@ def node_filter_1(state:SmartHomeAgentState)-> Command[Literal["filter_2_node", 
                          tools=[get_device_all_states, get_device_all_capabilities],
                         system_prompt=system_prompt,
                          response_format=DeviceIdList,
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema = AgentContext
                          )
-    result = agent.invoke({
-        "messages": [
+    result = agent.invoke(
+        input={"messages": [
             {"role": "user", "content": state['command']},
-        ]
-    })
-    # 日志打印
-    msg_content = "\n" + "\n".join(map(repr, result["messages"]))
-    GLOBALCONFIG.logger.info(msg_content)
+        ]},
+        context=AgentContext(agent_name="过滤一")
+    )
+    # # 日志打印
+    # msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+    # GLOBALCONFIG.logger.info("================"+"过滤一")
+    # GLOBALCONFIG.logger.info(msg_content)
+    # GLOBALCONFIG.logger.info("\n")
 
     deviceInfoList = result["structured_response"]
     # 无缩进（紧凑格式，适合传输/存储）
@@ -159,7 +166,7 @@ def node_filter_2(state:SmartHomeAgentState)-> Command[Literal["planner_node", E
     :return:
     """
     # 不需要工具，从记忆里获取信息，进行初筛 和 细筛
-    json_str_compact = """<|FunctionCallEnd|>[{"device_id":"ac5c6e84654cf19a5f91d3d36d0ff05b","reason":"该设备能获取网络状态、IP地址、WiFi网络名称等网络相关信息，可用于查看网络状况"}]"""
+    json_str_compact = """{"devices":[{"device_id":"c86e3c14d0egbfc02g4cae35662d6944","device_name":"灯泡 灯","device_reason":"支持开关控制，可关闭"},{"device_id":"164c1a92b8ce9cda0e2a8c13440b4722","device_name":"灯泡  灯","device_reason":"支持开关控制，可关闭"}]}"""
 
     content = [AIMessage(content=json_str_compact)]
     return Command(
@@ -179,15 +186,20 @@ def node_filter_2(state:SmartHomeAgentState)-> Command[Literal["planner_node", E
     agent = create_agent(model=get_llm(),
                          tools=[get_device_constraints_individual_match_text],
                          # response_format=DeviceIdList,
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
                          )
-    result = agent.invoke({
-        "messages": [
+    result = agent.invoke(
+        input={"messages": [
             {"role": "system", "content": prompt},
-        ]
-    })
-    # 日志打印
-    msg_content = "\n" + "\n".join(map(repr, result["messages"]))
-    GLOBALCONFIG.logger.info(msg_content)
+        ]},
+        context = AgentContext(agent_name="过滤二")
+    )
+    # # 日志打印
+    # msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+    # GLOBALCONFIG.logger.info("================" + "过滤二")
+    # GLOBALCONFIG.logger.info(msg_content)
+    # GLOBALCONFIG.logger.info("\n")
 
     # deviceInfoList = result["structured_response"]
     # # 无缩进（紧凑格式，适合传输/存储）
@@ -215,13 +227,25 @@ def node_planner(state:SmartHomeAgentState)-> Command[Literal["deliver_node", EN
     根据任务及设备能力和状态类型、使用习惯，规划出应该让每个设备做什么
     """
     # todo 改成从设备列表获取 设备能力和获取状态
-    agent = create_agent(model=get_llm(), tools=[get_devices_states,get_devices_capabilities,get_devices_usage_habits,executor_planning],)
-    result = agent.invoke({
-        "messages": [
+    agent = create_agent(
+        model=get_llm(),
+        tools=[get_devices_states,get_devices_capabilities,get_devices_usage_habits,executor_planning],
+        middleware=[log_before, log_response, log_before_agent, log_after_agent],
+        context_schema=AgentContext
+    )
+    result = agent.invoke(
+        input={"messages": [
             {"role": "system", "content": prompt},
-        ]
-    })
-    content = [AIMessage(content="对device_01开灯")]
+        ]},
+        context = AgentContext(agent_name="规划阶段")
+    )
+
+    # msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+    # GLOBALCONFIG.logger.info("================" + "规划阶段")
+    # GLOBALCONFIG.logger.info(msg_content)
+    # GLOBALCONFIG.logger.info("\n")
+
+    content = [AIMessage(content=result["messages"][-1].content)]
     return Command(
         update={"messages": content},  # Store raw results or error
         goto="deliver_node"
@@ -254,9 +278,10 @@ agent_builder.add_edge(START, "filter_1_node")
 agent = agent_builder.compile()
 
 # Test with an urgent billing issue
+task="关闭所有灯"
 initial_state = {
-    "command": "网络状况",
-    "messages": [HumanMessage(content="网络状况")]
+    "command": task,
+    "messages": [HumanMessage(content=task)]
 }
 result = agent.invoke(initial_state)
 for m in result["messages"]:

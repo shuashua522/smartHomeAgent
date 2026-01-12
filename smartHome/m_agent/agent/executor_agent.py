@@ -1,11 +1,14 @@
+from smartHome.m_agent.agent.langchain_middleware import log_before, log_response, log_before_agent, log_after_agent, \
+    AgentContext
 from smartHome.m_agent.agent.persistent_tools import PythonInterpreterTool, NotifyOnConditionTool
 from smartHome.m_agent.common.get_llm import get_llm
 from langchain.agents import create_agent
 from langchain.tools import tool
 
+from smartHome.m_agent.common.global_config import GLOBALCONFIG
 from smartHome.m_agent.memory.fact_memory import get_device_all_entities_states, get_device_all_entities_capabilities
-from smartHome.m_agent.memory.fake.fake_do_service import fake_execute_domain_service_by_entity_id
-from smartHome.m_agent.memory.fake.fake_request import fake_get_states_by_entity_id, fake_get_services_by_domain
+from smartHome.m_agent.memory.fake.tools_fake_request import tool_get_states_by_entity_id, tool_get_services_by_domain, \
+    tool_execute_action_by_entity_id
 
 
 @tool
@@ -21,12 +24,22 @@ def executor_planning(planning:str):
         - 如果任务失败，需要简练记录失败原因
         """
     agent = create_agent(model=get_llm(),
-                         tools=[get_device_current_status, execute_device_action, start_device_persistent_monitoring], )
-    result = agent.invoke({
-        "messages": [
+                         tools=[get_device_current_status, execute_device_action, start_device_persistent_monitoring],
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
+                         )
+    result = agent.invoke(
+        input={"messages": [
             {"role": "system", "content": prompt},
-        ]
-    })
+        ]},
+        context=AgentContext(agent_name="执行计划阶段")
+    )
+
+    # msg_content = "\n" + "\n".join(map(repr, result["messages"]))
+    # GLOBALCONFIG.logger.info("================" + "执行计划")
+    # GLOBALCONFIG.logger.info(msg_content)
+    # GLOBALCONFIG.logger.info("\n")
+
     return result["messages"][-1].content
 
 @tool
@@ -44,12 +57,16 @@ def get_device_current_status(device_id:str,what_status:str):
             选择实体后再调用工具获取该设备的当前状态
             """
     agent = create_agent(model=get_llm(),
-                         tools=[get_device_all_entities_states,fake_get_states_by_entity_id], )
-    result = agent.invoke({
-        "messages": [
+                         tools=[get_device_all_entities_states,tool_get_states_by_entity_id],
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
+                         )
+    result = agent.invoke(
+        input={"messages": [
             {"role": "system", "content": prompt},
-        ]
-    })
+        ]},
+        context=AgentContext(agent_name="executor_读设备阶段")
+    )
     return result["messages"][-1].content
 
 @tool
@@ -67,12 +84,16 @@ def execute_device_action(device_id: str, action: str):
                 选择实体后再调用工具对设备执行动作
                 """
     agent = create_agent(model=get_llm(),
-                         tools=[get_device_all_entities_capabilities,fake_get_states_by_entity_id,fake_get_services_by_domain,fake_execute_domain_service_by_entity_id], )
-    result = agent.invoke({
-        "messages": [
+                         tools=[get_device_all_entities_capabilities,tool_get_states_by_entity_id,tool_get_services_by_domain,tool_execute_action_by_entity_id],
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
+                         )
+    result = agent.invoke(
+        input={"messages": [
             {"role": "system", "content": prompt},
-        ]
-    })
+        ]},
+        context=AgentContext(agent_name="executor_操作设备阶段")
+    )
     return result["messages"][-1].content
 
 @tool
@@ -94,10 +115,30 @@ def start_device_persistent_monitoring(device_id: str,when_true:str,then_do:str)
             5. 调用工具持久化监控
             """
     agent = create_agent(model=get_llm(),
-                         tools=[get_device_all_entities_capabilities, fake_get_states_by_entity_id,PythonInterpreterTool,NotifyOnConditionTool], )
+                         tools=[get_device_all_entities_capabilities, tool_get_states_by_entity_id,PythonInterpreterTool,NotifyOnConditionTool], )
     result = agent.invoke({
         "messages": [
             {"role": "system", "content": prompt},
         ]
     })
     return result["messages"][-1].content
+
+if __name__ == "__main__":
+    planning="""关闭设备c86e3c14d0egbfc02g4cae35662d6944（灯泡 灯）；"""
+    prompt = f"""
+            【计划表】:{planning}
+            根据计划表，调用不同的工具来完成计划表中的每一个任务，你不需要修正计划表，只需要如实记录各任务执行情况。
+            - 如果任务失败，需要简练记录失败原因
+            """
+    agent = create_agent(model=get_llm(),
+                         tools=[get_device_current_status, execute_device_action, start_device_persistent_monitoring],
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
+                         )
+    result = agent.invoke(
+        input={"messages": [
+            {"role": "system", "content": prompt},
+        ]},
+        context=AgentContext(agent_name="executor_设备持续监控阶段")
+    )
+    pass
