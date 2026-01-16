@@ -7,8 +7,11 @@ from langchain.agents import create_agent
 from pydantic import BaseModel, Field, ValidationError
 import json
 
+from smartHome.m_agent.agent.langchain_middleware import log_before, AgentContext, log_response, log_before_agent, \
+    log_after_agent
 from smartHome.m_agent.common.get_llm import get_llm
 from smartHome.m_agent.common.global_config import GLOBALCONFIG
+from smartHome.m_agent.common.logger import setup_dynamic_indent_logger
 from smartHome.m_agent.memory.device_info import DEVICEINFO
 from smartHome.m_agent.memory.vector_device import VECTORDB, TextWithMeta, search_topK_device_by_clues, add, delete, \
     update
@@ -280,6 +283,7 @@ class SmartHomeMemory():
             device_name=DEVICEINFO.get_device_detail(device_id)["name"]
             # entity_info_text = self._format_entity_fact_list(entity_fact_list)
             if (GLOBALCONFIG.env == "test"):
+                GLOBALCONFIG.nested_logger = GLOBALCONFIG.memory_init_logger
                 # 设计LLM提示词模板（聚焦设备级事实提取）
                 prompt = f"""
         请基于以下智能家居设备（device_id: {device_id} ({device_name})）包含的所有实体事实性信息，提取该设备的**整体事实性信息**:
@@ -287,21 +291,32 @@ class SmartHomeMemory():
         【设备包含的实体事实信息】
         {entity_fact_list}
                     """.strip()
+                prompt = f"""
+                请基于以下智能家居设备（device_id: {device_id} ({device_name})）包含的所有实体事实性信息，分析该设备的**整体事实性信息**:
+                1. device_id_clues里只需包含设备名字
+                2. usage_habits应该为空，因为实体信息里不可能包含
+                3. 该实体实际可执行的功能，没有则为空，如调节亮度，调节温度等
+                4. 只提取实体包含的事实信息，不要过多分析、假设
+                最终输出严格符合JSON格式（需包含功能分析结果，字段与DeviceFact模型对齐）
+                - 字段内容与DeviceFact模型的描述和示例一致
+
+                【设备包含的实体事实信息】
+                {entity_fact_list}
+                """
                 agent = create_agent(
                     model=get_llm(),
                     response_format=DeviceFact,  # 多实体列表格式
+                    middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                    context_schema=AgentContext
                 )
-                result = agent.invoke({
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ]
-                })
-                # 日志打印
-                msg_content = "\n" + "\n".join(map(repr, result["messages"]))
-                GLOBALCONFIG.memory_init_logger.info(msg_content)
+
+                result = agent.invoke(
+                    input={"messages": [
+                        {"role": "system", "content": prompt},
+                    ]},
+                    context=AgentContext(agent_name="设备事实_记忆初始化阶段")
+                )
+
 
                 device_fact = result["structured_response"]
             else:
@@ -336,50 +351,35 @@ class SmartHomeMemory():
                 entity_detail=DEVICEINFO.get_entity_detail(entity_id)
                 domain_service=DEVICEINFO.get_domain_service(entity_id)
                 if(GLOBALCONFIG.env=="test"):
+                    GLOBALCONFIG.nested_logger = GLOBALCONFIG.memory_init_logger
                     agent = create_agent(
                         model=get_llm(),
                         response_format=EntityFact,  # 多实体列表格式
+                        middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                        context_schema=AgentContext
                     )
                     prompt = f"""
-                    请严格按照以下步骤分析并提取Home Assistant实体的事实性信息：
-
-                    ### 步骤1：分析【entity】内容
-                    仔细解析【entity】中的字段（如entity_id、attributes、state等），明确该实体的基础属性（如设备类型、状态维度、所属域）。
-
-                    ### 步骤2：分析【service】内容
-                    解析【service】中该实体所属domain支持的所有服务，区分“该实体实际支持的服务”和“该实体不支持的服务”（基于entity的supported_features、attributes等判断）。
-
-                    ### 步骤3：总结功能范围
-                    基于前两步的分析，清晰总结：
-                    1. 该实体**支持的功能**（需对应到具体的用户可操作行为，如“打开/关闭灯光”“调节温度”）；
-                    2. 该实体**不支持的功能**（需明确排除的行为，如“该传感器仅支持读取状态，不支持任何主动操作”“空调不支持调节湿度”）。
-
-                    ### 步骤4：输出结构化信息
-                    最终输出严格符合JSON格式（需包含功能分析结果，字段与EntityFact模型对齐）：
+                    解析下面这个homeassitant实体，分析：
+                    1. 该HA实体可采集的状态类型，如开关状态、亮度、温度等
+                    2. 该实体实际可执行的功能，没有则为空，如调节亮度，调节温度等
+                    3. 用于定位HA Entity ID的多维度线索，没有则为空。对于homeassitant实体，只需包含其friendly_name即可
+                    4. 只提取实体包含的事实信息，不要过多分析、假设
+                    最终输出严格符合JSON格式（需包含功能分析结果，字段与EntityFact模型对齐）
+                    - 字段内容与EntityFact模型的描述和示例一致
+                    - 字段内容要简练，不需要像这样额外描述，"用户口语示例：'门窗光照','门窗传感器 光照度','窗户光线 强/弱"，应该为"门窗光照"、'门窗传感器 光照度'
+                    - 字段内容不需要包含当前设备的具体状态数值，比如"当前状态：弱","更新时间:2025-12-1"，这些具体数值都不应该包含。
 
                     【entity】
                     {entity_detail}
                     【service】
                     {domain_service}
-
-                    ### 强制要求
-                    1. 必须先完成功能分析，再输出JSON；
-                    2. JSON字段完整，无缺失（空值用空列表/空字符串）；
-                    3. 仅输出最终的JSON内容，无任何额外解释、分析文字；
-                    4. “支持/不支持的功能”需准确对应【service】和【entity】的匹配结果，不虚构。
                     """
-                    result = agent.invoke({
-                        "messages": [
-                            {
-                                "role": "user",
-                                "content": prompt
-                            }
-                        ]
-                    })
-
-                    # 日志打印
-                    msg_content = "\n" + "\n".join(map(repr, result["messages"]))
-                    GLOBALCONFIG.memory_init_logger.info(msg_content)
+                    result = agent.invoke(
+                        input={"messages": [
+                            {"role": "system", "content": prompt},
+                        ]},
+                        context=AgentContext(agent_name="实体事实_记忆初始化阶段")
+                    )
 
                     # 解析并输出提取结果（适配EntityFact字段）
                     entity_fact = result["structured_response"]
@@ -538,16 +538,18 @@ class SmartHomeMemory():
         2. 选择并调用add/delete/update工具对记忆库中的信息进行更新
         3. 更新成功后简单说明本次更新了哪些内容。
         """
-
+        GLOBALCONFIG.nested_logger=GLOBALCONFIG.memory_update_logger
         agent = create_agent(model=get_llm(),
-                             tools=[search_topK_device_by_clues, add, delete,update], )
-        result = agent.invoke({
-            "messages": [
+                             tools=[search_topK_device_by_clues, add, delete,update],
+                             middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                             context_schema=AgentContext
+                             )
+        result = agent.invoke(
+            input={"messages": [
                 {"role": "system", "content": prompt},
-            ]
-        })
-        msg_content = "\n" + "\n".join(map(repr, result["messages"]))
-        GLOBALCONFIG.memory_logger.info(msg_content)
+            ]},
+            context=AgentContext(agent_name="对话__记忆更新阶段")
+        )
 
         # device_fact_list_result = result["structured_response"]
         return result["messages"][-1].content
@@ -598,5 +600,10 @@ def get_device_all_entities_capabilities(device_id: str):
 
 if __name__ == "__main__":
     # SMARTHOMEMEMORY.init_memory_for_entity()
-    # SMARTHOMEMEMORY.init_memory_for_device()
+    SMARTHOMEMEMORY.init_memory_for_device()
+    # dialogue_record="""
+    # ai：请问哪一个是客厅灯?设备ID：164c1a92b8ce9cda0e2a8c13440b4722;设备ID：b75d2b03c9dfaebf1f3b9d24551c5833;设备ID：c86e3c14d0egbfc02g4cae35662d6944
+    # 用户: 第三个
+    # """
+    # SMARTHOMEMEMORY.extract_and_update(dialogue_record=dialogue_record)
     pass

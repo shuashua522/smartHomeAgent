@@ -115,13 +115,13 @@ def node_filter_1(state:SmartHomeAgentState)-> Command[Literal["filter_2_node", 
     :param state:
     :return:
     """
-    json_str_compact = """{"devices":[{"device_id":"c86e3c14d0egbfc02g4cae35662d6944","device_name":"灯泡 灯","device_reason":"支持开关控制，可关闭"},{"device_id":"164c1a92b8ce9cda0e2a8c13440b4722","device_name":"灯泡  灯","device_reason":"支持开关控制，可关闭"},{"device_id":"b75d2b03c9dfaebf1f3b9d24551c5833","device_name":"灯泡  灯","device_reason":"支持开关控制，可关闭"},{"device_id":"31ae92d8a163d77f8d6a5741c0d1b89c","device_name":"米家智能台灯Lite","device_reason":"支持开关控制，可关闭"},{"device_id":"e2bf03e9b274e88f9e7b6852d1e2c90d","device_name":"米家智能台灯Lite","device_reason":"支持开关控制，可关闭"}]}"""
-    content = [AIMessage(content=json_str_compact)]
-    return Command(
-        update={"messages": content,
-                "first_filter_devices": json_str_compact},  # Store raw results or error
-        goto="filter_2_node"
-    )
+    # json_str_compact = """{"devices":[{"device_id":"c86e3c14d0egbfc02g4cae35662d6944","device_name":"灯泡 灯","device_reason":"支持开关控制，可关闭"},{"device_id":"164c1a92b8ce9cda0e2a8c13440b4722","device_name":"灯泡  灯","device_reason":"支持开关控制，可关闭"},{"device_id":"b75d2b03c9dfaebf1f3b9d24551c5833","device_name":"灯泡  灯","device_reason":"支持开关控制，可关闭"},{"device_id":"31ae92d8a163d77f8d6a5741c0d1b89c","device_name":"米家智能台灯Lite","device_reason":"支持开关控制，可关闭"},{"device_id":"e2bf03e9b274e88f9e7b6852d1e2c90d","device_name":"米家智能台灯Lite","device_reason":"支持开关控制，可关闭"}]}"""
+    # content = [AIMessage(content=json_str_compact)]
+    # return Command(
+    #     update={"messages": content,
+    #             "first_filter_devices": json_str_compact},  # Store raw results or error
+    #     goto="filter_2_node"
+    # )
 
     system_prompt = f"""
         根据所有的设备简介（设备能做什么，能从设备获取到什么），选出可能能用于完成此次任务的设备ID列表，并简单说明理由.
@@ -166,14 +166,14 @@ def node_filter_2(state:SmartHomeAgentState)-> Command[Literal["planner_node", E
     :return:
     """
     # 不需要工具，从记忆里获取信息，进行初筛 和 细筛
-    json_str_compact = """{"devices":[{"device_id":"c86e3c14d0egbfc02g4cae35662d6944","device_name":"灯泡 灯","device_reason":"支持开关控制，可关闭"},{"device_id":"164c1a92b8ce9cda0e2a8c13440b4722","device_name":"灯泡  灯","device_reason":"支持开关控制，可关闭"}]}"""
-
-    content = [AIMessage(content=json_str_compact)]
-    return Command(
-        update={"messages": content,
-                "second_filter_devices": json_str_compact},  # Store raw results or error
-        goto="planner_node"
-    )
+    # json_str_compact = """{"devices":[{"device_id":"c86e3c14d0egbfc02g4cae35662d6944","device_name":"灯泡 灯","device_reason":"支持开关控制，可关闭"},{"device_id":"164c1a92b8ce9cda0e2a8c13440b4722","device_name":"灯泡  灯","device_reason":"支持开关控制，可关闭"}]}"""
+    #
+    # content = [AIMessage(content=json_str_compact)]
+    # return Command(
+    #     update={"messages": content,
+    #             "second_filter_devices": json_str_compact},  # Store raw results or error
+    #     goto="planner_node"
+    # )
 
     prompt=f"""
     【任务】：{state["command"]}
@@ -278,7 +278,7 @@ agent_builder.add_edge(START, "filter_1_node")
 agent = agent_builder.compile()
 
 # Test with an urgent billing issue
-task="关闭所有灯"
+task="将客厅灯调暖一点"
 initial_state = {
     "command": task,
     "messages": [HumanMessage(content=task)]

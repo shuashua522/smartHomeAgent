@@ -3,61 +3,44 @@
     "device_id": "cf03cb835279ea4876ab6ee202aa9832",
     "device_name": "门窗传感器",
     "states": [
-      "光照度状态",
-      "电量",
-      "开关状态"
+      "门窗传感器 光照度",
+      "电池电量",
+      "门窗接触状态（开/关，binary on/off）"
     ],
     "capabilities": [],
     "device_id_clues": [
-      "sensor",
-      "isa_cn_blt_3_1md0u6qht0k00_dw2hl_illumination_p_2_1",
-      "门窗传感器 光照度",
-      "弱/强状态",
-      "binary_sensor",
-      "门窗传感器",
-      "接触状态",
-      "电量",
-      "电池电量"
+      "门窗传感器"
     ],
     "usage_habits": [],
     "others": [
-      "设备类型：enum传感器",
-      "HA集成：isa",
-      "设备型号：ISA-CN-BLT-3",
-      "供电方式：纽扣电池"
+      "device_class: enum",
+      "options: 弱, 强",
+      "icon: mdi:format-text",
+      "domain: sensor",
+      "device_class: battery",
+      "unit_of_measurement: %",
+      "state_class: measurement",
+      "device_class: door",
+      "domain: binary_sensor"
     ]
   },
   "d914ad946380fb5987bc7ff313bb0a45": {
     "device_id": "d914ad946380fb5987bc7ff313bb0a45",
     "device_name": "门窗传感器",
     "states": [
-      "光照度状态",
-      "电池电量",
-      "开关状态"
+      "光照度（枚举：弱、强）",
+      "电池电量（%）",
+      "门窗接触状态（开/关）"
     ],
     "capabilities": [],
     "device_id_clues": [
-      "sensor",
-      "门窗传感器",
-      "光照度",
-      "isa_cn_blt_3_2ne1v7riu1l11_dw2hl_illumination_p_2_1",
-      "电量",
-      "电池电量",
-      "binary_sensor",
-      "接触状态"
+      "门窗传感器"
     ],
     "usage_habits": [],
     "others": [
-      "设备类型：enum传感器",
-      "HA集成：isa",
-      "device_class：enum",
-      "icon：mdi:format-text",
-      "设备型号：ISA-CN-BLT-3",
-      "供电方式：纽扣电池",
-      "设备类型：door",
-      "last_changed：2025-11-04T06:56:41.803054+00:00",
-      "last_reported：2025-11-04T06:56:41.803054+00:00",
-      "last_updated：2025-11-04T06:56:41.803054+00:00"
+      "entity_id: sensor.isa_cn_blt_3_2ne1v7riu1l11_dw2hl_illumination_p_2_1; friendly_name: 门窗传感器  门窗传感器 光照度; device_class: enum; options: 弱, 强; icon: mdi:format-text",
+      "entity_id: sensor.isa_cn_blt_3_2ne1v7riu1l11_dw2hl_battery_level_p_3_1; friendly_name: 门窗传感器  电量 电池电量; domain: sensor; device_class: battery; state_class: measurement; unit_of_measurement: %",
+      "entity_id: binary_sensor.isa_cn_blt_3_2ne1v7riu1l11_dw2hl_contact_state_p_2_2; friendly_name: 门窗传感器  门窗传感器 接触状态; domain: binary_sensor; device_class: door"
     ]
   },
   "31ae92d8a163d77f8d6a5741c0d1b89c": {
@@ -67,448 +50,427 @@
       "开关状态",
       "亮度",
       "效果模式",
-      "当前值",
-      "最小值",
-      "最大值",
-      "步长",
-      "模式",
-      "单位",
-      "时间间隔状态",
-      "推送休息事件状态"
+      "色彩模式",
+      "按键时间戳（state 字段为时间/最后触发时间/最后按下时间）",
+      "事件类型（event_types）",
+      "延时关灯时间（数值，单位：秒）",
+      "视疲劳提醒时间间隔（数值，单位：分钟）",
+      "开关状态（on/off，用于个性化功能开关/夜间模式开关）"
     ],
     "capabilities": [
-      "按下按钮",
-      "打开灯光",
-      "关闭灯光",
-      "切换灯光状态",
-      "调节亮度百分比",
-      "设置灯光效果",
-      "设置数值",
-      "设置时间间隔值",
-      "打开开关",
-      "关闭开关",
-      "切换开关状态"
+      "打开 (turn_on)",
+      "关闭 (turn_off)",
+      "切换 (toggle)",
+      "调节亮度",
+      "设置效果 (effect)",
+      "按下（button.press）",
+      "设置数值（number.set_value）"
     ],
     "device_id_clues": [
-      "米家智能台灯Lite",
-      "button",
-      "开关状态切换",
-      "亮度-",
-      "亮度+",
-      "philips_cn_1061200910_lite_brightness_up_a_3_2",
-      "event",
-      "推送休息事件",
-      "philips_cn_1061200910_lite_notify_you_e_3_1",
-      "light",
-      "philips_cn_1061200910_lite_s_2",
-      "number",
-      "philips_cn_1061200910_lite_dvalue_p_3_1",
-      "s",
-      "视疲劳提醒时间间隔设置",
-      "philips_cn_1061200910_lite",
-      "switch",
-      "个性化功能",
-      "开启/关闭视疲劳提醒功能",
-      "夜间模式"
+      "米家智能台灯Lite"
     ],
     "usage_habits": [],
     "others": [
-      "HA集成：philips",
-      "设备型号：philips_cn_1061200910_lite_s_2",
-      "设备类型：switch",
-      "所属域：number",
-      "单位：min",
-      "最小值：1",
-      "最大值：120",
-      "步长：1",
-      "模式：auto",
-      "图标：mdi:clock",
-      "状态：unavailable",
-      "last_changed：2025-10-27T11:25:38.188751+00:00",
-      "last_reported：2025-10-27T11:25:38.188751+00:00",
-      "last_updated：2025-10-27T11:25:38.188751+00:00",
-      "event_types：推送休息事件"
+      "entity domain: button（包含属性: friendly_name，包含字段: last_changed, last_reported, last_updated, context.id）",
+      "button state 值格式为时间戳/时间字符串（记录最后事件时间）",
+      "支持服务: button.press",
+      "domain: event（attributes.event_types 包含: 推送休息事件）",
+      "domain: light（attributes 包含: effect, color_mode, brightness）",
+      "supported_color_modes: [\"brightness\"]",
+      "effect_list: [\"mode 0\", \"mode 1\", \"mode 2\"]",
+      "supported_features: 4",
+      "domain: number（min, max, step, mode, unit_of_measurement, icon 信息存在）",
+      "number 延时关灯: min=0, max=21600, step=1, unit_of_measurement=s, icon=mdi:clock",
+      "number 视疲劳提醒时间间隔: min=1, max=120, step=1, unit_of_measurement=min, attributes 包含 mode=auto, icon=mdi:clock",
+      "domain: switch（device_class: switch）",
+      "switch 支持: turn_on, turn_off, toggle"
     ]
   },
   "e2bf03e9b274e88f9e7b6852d1e2c90d": {
     "device_id": "e2bf03e9b274e88f9e7b6852d1e2c90d",
     "device_name": "米家智能台灯Lite",
     "states": [
-      "开关状态",
+      "按键触发时间（时间戳）",
+      "按键最后触发时间（时间戳）",
+      "按键事件（最后按下时间戳）",
+      "事件类型",
+      "开/关状态",
       "亮度",
-      "效果模式",
-      "当前值",
-      "时间间隔状态"
+      "颜色模式",
+      "灯效",
+      "延时关灯时间（秒）",
+      "数值",
+      "提醒时间间隔（数值，单位：分钟）",
+      "开关状态"
     ],
     "capabilities": [
-      "按下按钮",
-      "设置数值",
-      "设置时间间隔值",
-      "打开灯光",
-      "关闭灯光",
-      "切换灯光状态",
+      "触发按键（调用 button.press 服务）",
+      "press（按下/触发）",
+      "按下按钮（press 服务）",
+      "开关",
       "调节亮度",
-      "设置灯光效果",
-      "关闭开关",
-      "打开开关",
-      "切换开关状态"
+      "设置灯效",
+      "设置数值（number.set_value）：设置延时关灯时间，单位为秒",
+      "设置提醒时间间隔数值（分钟）",
+      "可通过 number.set_value 服务设置目标值",
+      "switch.turn_on（打开）",
+      "switch.turn_off（关闭）",
+      "switch.toggle（切换开/关）",
+      "turn_on（开启）",
+      "turn_off（关闭）",
+      "toggle（切换）"
     ],
     "device_id_clues": [
-      "米家智能台灯Lite",
-      "button",
-      "开关状态切换",
-      "亮度-",
-      "亮度+",
-      "推送休息事件",
-      "light",
-      "延时关灯的时间",
-      "视疲劳提醒时间间隔",
-      "switch",
-      "夜间模式"
+      "米家智能台灯Lite"
     ],
     "usage_habits": [],
     "others": [
-      "HA集成：philips",
-      "设备型号：philips_cn_1061201010_lite_s_2",
-      "单位：s",
-      "最小值：0",
-      "最大值：21600",
-      "步长：1",
-      "模式：auto",
-      "图标：mdi:clock",
-      "单位：min",
-      "最小值：1",
-      "最大值：120",
-      "步长：1",
-      "设备类型：switch",
-      "状态：unavailable"
+      "domain: button",
+      "attributes包含: friendly_name, last_changed, last_reported, last_updated",
+      "包含context字段(id, parent_id, user_id)",
+      "域: button",
+      "domain: event",
+      "attributes.event_types: 推送休息事件",
+      "domain: light",
+      "supported_color_modes: [\"brightness\"]",
+      "effect_list: [\"mode 0\", \"mode 1\", \"mode 2\"]",
+      "supported_features: 4",
+      "domain: number",
+      "min: 0",
+      "max: 21600",
+      "step: 1",
+      "mode: auto",
+      "unit_of_measurement: s",
+      "icon: mdi:clock",
+      "domain:number",
+      "min:1",
+      "max:120",
+      "step:1",
+      "mode:auto",
+      "unit_of_measurement:min",
+      "icon:mdi:clock",
+      "device_class: switch",
+      "domain: switch"
     ]
   },
   "ac5c6e84654cf19a5f91d3d36d0ff05b": {
     "device_id": "ac5c6e84654cf19a5f91d3d36d0ff05b",
     "device_name": "小米智能多模网关2",
     "states": [
-      "开关状态",
-      "网络状态",
-      "亮度值",
-      "接入方式状态",
-      "IP地址",
-      "WiFi网络名称",
-      "网络变化状态",
-      "生效时间段"
+      "按键状态/按压触发（按钮事件）",
+      "网络发生变化",
+      "按键事件（单击）",
+      "按键事件（双击）",
+      "按钮事件（长按）",
+      "网关防误删功能相关事件（尝试长按10s重置键上报）",
+      "指示灯亮度（%）",
+      "勿扰模式状态（Close / Open）",
+      "网关防误删状态（Close / Open）",
+      "接入方式（有线, 2.4G 无线, 5G 无线）",
+      "网关 IP地址",
+      "WiFi网络名称 (SSID)（只读）",
+      "网关网络变化状态（包含 access-mode、ip、wifi-ssid、time）",
+      "指示灯生效时间段文本（格式 HH:MM-HH:MM）"
     ],
     "capabilities": [
-      "触发按钮按压",
-      "设置数值",
-      "选择第一个选项",
-      "选择最后一个选项",
-      "选择下一个选项",
-      "选择指定选项",
-      "选择上一个选项",
-      "设置文本值"
+      "button.press（触发按键，service: button.press）",
+      "number.set_value（设置数值，设置指示灯亮度，接受 value 字段，单位: %）",
+      "select.select_option（选择指定选项）",
+      "select.select_next（选择下一项，可循环）",
+      "select.select_previous（选择上一项，可循环）",
+      "select.select_first（选择首项）",
+      "select.select_last（选择末项）",
+      "text.set_value（设置文本值，service: text.set_value，字段: value）"
     ],
     "device_id_clues": [
-      "小米智能多模网关2",
-      "button",
-      "event",
-      "number",
-      "select",
-      "sensor",
-      "text",
-      "设备确认",
-      "设备响应",
-      "网关",
-      "网络发生变化",
-      "网关按键",
-      "单击",
-      "双击",
-      "长按",
-      "网关防误删功能",
-      "指示灯亮度",
-      "勿扰模式状态(开/关)",
-      "网关防误删状态",
-      "接入方式",
-      "IP地址",
-      "WiFi网络名称",
-      "网络变化状态",
-      "生效时间段"
+      "小米智能多模网关2"
     ],
     "usage_habits": [],
     "others": [
-      "设备型号：lumi.cn.551385025.mcn001",
-      "HA集成：lumi",
-      "供电方式：未知",
-      "联网方式：未知",
-      "所属域：button、event、number、select、sensor、text",
-      "单位：%（指示灯亮度）",
-      "最小值：1（指示灯亮度）",
-      "最大值：100（指示灯亮度）",
-      "步长：1（指示灯亮度）",
-      "模式：auto（指示灯亮度）",
-      "图标：mdi:percent（指示灯亮度）",
-      "状态值格式：21:00-09:00（生效时间段）"
+      "entity_id: button.lumi_cn_551385025_mcn001_identify_a_20_1; friendly_name: 小米智能多模网关2  设备确认 设备响应; domain: button; 存在 state 字段（当前值未提取）; 存在时间戳字段：last_changed、last_reported、last_updated; context.id: 01K96T2QM8RXWFAX2699FDDWGX; 可用服务定义摘录：button.press（Presses a button entity.）",
+      "entity_id: event.lumi_cn_551385025_mcn001_network_changed_e_2_1; friendly_name: 小米智能多模网关2  网关 网络发生变化; domain: event; attributes.event_types: ['网络发生变化']; attributes.event_type: null",
+      "entity_id: event.lumi_cn_551385025_mcn001_click_e_4_1; friendly_name: 小米智能多模网关2  网关按键 单击; domain: event; device_class: button; attributes.event_types: ['单击']; attributes.event_type: None",
+      "entity_id: event.lumi_cn_551385025_mcn001_double_click_e_4_2; friendly_name: 小米智能多模网关2  网关按键 双击; domain: event; device_class: button; event_types: 双击; event_type: None",
+      "entity_id: event.lumi_cn_551385025_mcn001_long_press_e_4_3; friendly_name: 小米智能多模网关2  网关按键 长按; domain: event; device_class: button; attributes.event_types: ['长按']; attributes.event_type: null",
+      "entity_id: event.lumi_cn_551385025_mcn001_event_unbind_e_7_1; friendly_name: 小米智能多模网关2 * 网关防误删功能 网关防误删功能开启后，尝试长按10s重置键上报该事件; domain: event; attributes.event_types: ['网关防误删功能开启后，尝试长按10s重置键上报该事件']; attributes.event_type: None",
+      "entity_id: number.lumi_cn_551385025_mcn001_indicator_brightness_p_6_3; friendly_name: 小米智能多模网关2 * 指示灯与勿扰模式配置 指示灯亮度; domain: number; 单位: %; 最小值: 1; 最大值: 100; 步进: 1; mode 属性: auto; icon: mdi:percent; 支持服务: number.set_value（接受 value 字段）",
+      "entity_id: select.lumi_cn_551385025_mcn001_status_p_6_1; friendly_name: 小米智能多模网关2 * 指示灯与勿扰模式配置 勿扰模式状态(开/关); domain: select; attributes.options: ['Close','Open']; 可用操作: select_option, select_next, select_previous, select_first, select_last; 存在属性键：last_changed、last_reported、last_updated、context.id",
+      "entity_id: select.lumi_cn_551385025_mcn001_status_p_7_1; friendly_name: 小米智能多模网关2 * 网关防误删功能 网关防误删状态; domain: select; attributes.options: ['Close','Open']; 可用操作: select_option, select_next, select_previous, select_first, select_last",
+      "entity_id: sensor.lumi_cn_551385025_mcn001_access_mode_p_2_1; friendly_name: 小米智能多模网关2  网关 接入方式; domain: sensor; device_class: enum; options: 有线, 2.4G 无线, 5G 无线; icon: mdi:format-text",
+      "entity_id: sensor.lumi_cn_551385025_mcn001_ip_address_p_2_2; friendly_name: 小米智能多模网关2  网关 IP地址; domain: sensor; icon: mdi:ip",
+      "entity_id: sensor.lumi_cn_551385025_mcn001_wifi_ssid_p_2_3; friendly_name: 小米智能多模网关2  网关 WiFi网络名称(写权限无效); domain: sensor; 文本/字符串; 写权限无效（只读）",
+      "entity_id: sensor.lumi_cn_551385025_mcn001_access_mode_p_2_5; friendly_name: 小米智能多模网关2  网关 网络变化状态string_fmt:{access-mode:{last:0,now:1],ip:{last:xx,now:xx},wifi-ssid:{last:xx,now:xx},time:12345678}}}; domain: sensor; attributes 中包含字段: access-mode、ip、wifi-ssid、time; 实体为只读传感器（sensor），无可调用的控制服务记录",
+      "entity_id: text.lumi_cn_551385025_mcn001_effective_time_p_6_2; friendly_name: 小米智能多模网关2 * 指示灯与勿扰模式配置 生效时间段(格式:21:00-09:00); domain: text; attributes.mode: text; attributes.min: 0; attributes.max: 255; attributes.pattern: None; 支持服务: text.set_value（字段: value）"
     ]
   },
   "21ab4b42c3e6a3fb27f93385082d4075": {
     "device_id": "21ab4b42c3e6a3fb27f93385082d4075",
     "device_name": "小米AI音箱（第二代）",
     "states": [
-      "状态",
-      "开关状态",
-      "音量",
-      "静音状态",
-      "播放状态"
+      "按钮状态",
+      "按键触发/事件",
+      "按键触发事件",
+      "按键触发状态",
+      "按键状态",
+      "播放状态",
+      "音量等级",
+      "是否静音",
+      "媒体内容类型",
+      "设备类别",
+      "state",
+      "通知内容（文本）",
+      "实体可用性/状态",
+      "开关状态 (on/off)"
     ],
     "capabilities": [
-      "按下按钮",
-      "发送通知消息",
-      "发送带有notify的通知",
-      "关闭开关",
-      "打开开关",
-      "切换开关状态",
-      "打开音箱",
-      "关闭音箱",
-      "切换播放/暂停",
-      "播放音乐",
-      "暂停播放",
-      "停止播放",
-      "下一首",
-      "上一首",
-      "清除播放列表",
-      "设置音量",
-      "静音/取消静音",
-      "播放媒体",
-      "浏览媒体",
-      "搜索媒体",
-      "设置随机播放",
-      "设置重复模式"
+      "触发按键（button.press）",
+      "播放 (media_play)",
+      "暂停 (media_pause)",
+      "停止 (media_stop)",
+      "上一曲 (media_previous_track)",
+      "下一曲 (media_next_track)",
+      "调节音量 (volume_set)",
+      "音量加 (volume_up)",
+      "音量减 (volume_down)",
+      "静音/取消静音 (volume_mute)",
+      "发送通知（可通过 notify.send_message / notify.notify，支持字段：message、title、data）",
+      "播放控制（action params: [播放控制时间(int)]）",
+      "播放文本（发送通知并播放文本，attributes.action params: [文本内容(str)]）",
+      "执行文本指令（attributes.action params: [文本内容(str), 指令静默执行(bool)]）",
+      "开关控制：turn_on / turn_off / toggle（麦克风静音开关）"
     ],
     "device_id_clues": [
-      "button",
-      "小米AI音箱（第二代）",
-      "闹钟",
-      "停止闹钟",
-      "智能音箱 唤醒",
-      "xiaomi_cn_701074704_l15a_wake_up_a_7_1",
-      "智能音箱",
-      "播放电台",
-      "播放音乐",
-      "电视开关",
-      "打开电视",
-      "media_player",
-      "speaker",
-      "xiaomi_cn_701074704_l15a",
-      "notify",
-      "xiaomi_cn_701074704_l15a_seek_a_3_1",
-      "智能音箱 播放文本",
-      "xiaomi_cn_701074704_l15a_play_text_a_7_3",
-      "执行文本指令",
-      "xiaomi_cn_701074704_l15a_execute_text_directive_a_7_4",
-      "switch",
-      "麦克风 静音"
+      "小米AI音箱（第二代）"
     ],
     "usage_habits": [],
     "others": [
-      "设备类型：speaker",
-      "HA集成：xiaomi",
-      "supported_features：21565",
-      "设备型号：701074704_l15a",
-      "状态：off"
+      "存在多个 button 实体，domain: button，支持服务: button.press",
+      "存在 media_player 实体，device_class: speaker，supported_features: 21565",
+      "存在 notify 实体，domain: notify，supported_features: 0，可通过 notify.send_message / notify.notify 调用，attributes 中包含 action params（如播放控制时间、文本内容、指令静默执行等）",
+      "存在 switch 实体，domain: switch，device_class: switch（麦克风静音）",
+      "部分实体属性包含 last_changed / last_reported / last_updated 字段",
+      "实体 friendly_name 中包含操作描述（如 播放音乐、播放电台、唤醒、停止闹钟、打开电视 等）"
     ]
   },
   "53bea65f446cb0a8150250354cb28a40": {
     "device_id": "53bea65f446cb0a8150250354cb28a40",
     "device_name": "小米人体传感器2S",
     "states": [
-      "事件状态",
-      "移动检测状态",
+      "设备被重置（事件）",
+      "移动检测",
       "光照度",
       "无移动状态持续时间",
-      "自定义超时无人移动时间",
-      "电池电量"
+      "数值（单位：秒）",
+      "自定义超时无人移动时间（分钟）",
+      "电池电量(%)"
     ],
     "capabilities": [],
     "device_id_clues": [
-      "小米人体传感器2S",
-      "移动检测传感器",
-      "event",
-      "sensor",
-      "电池电量"
+      "小米人体传感器2S"
     ],
     "usage_habits": [],
     "others": [
-      "设备型号：xiaomi_cn_blt_3_1ftnm7360c800_pir1",
-      "HA集成：xiaomi",
-      "供电方式：电池",
-      "设备类型：motion、illuminance",
-      "单位：lx、s、min",
-      "icon: mdi:clock"
+      "entity_id: event.xiaomi_cn_blt_3_1ftnm7360c800_pir1_device_be_reset_e_2_1028",
+      "friendly_name: 小米人体传感器2S  移动检测传感器 设备被重置",
+      "domain: event",
+      "attributes.event_types: ['设备被重置']",
+      "attributes.event_type: None",
+      "entity_id: event.xiaomi_cn_blt_3_1ftnm7360c800_pir1_motion_detected_e_2_1008",
+      "friendly_name: 小米人体传感器2S  移动检测传感器 检测到移动",
+      "domain: event",
+      "device_class: motion",
+      "attributes: event_types, event_type, 光照度",
+      "表示为检测到移动的事件实体（event）",
+      "entity_id: sensor.xiaomi_cn_blt_3_1ftnm7360c800_pir1_no_motion_duration_p_2_1024",
+      "friendly_name: 小米人体传感器2S  移动检测传感器 无移动状态持续时间",
+      "domain: sensor",
+      "unit_of_measurement: s",
+      "icon: mdi:clock",
+      "entity_id: sensor.xiaomi_cn_blt_3_1ftnm7360c800_pir1_illumination_p_2_1005",
+      "friendly_name: 小米人体传感器2S  移动检测传感器 光照度",
+      "domain: sensor",
+      "device_class: illuminance",
+      "unit_of_measurement: lx",
+      "state_class: measurement",
+      "entity_id: sensor.xiaomi_cn_blt_3_1ftnm7360c800_pir1_custom_no_motion_time_p_2_1053",
+      "friendly_name: 小米人体传感器2S  移动检测传感器 自定义超时无人移动时间",
+      "domain: sensor",
+      "unit_of_measurement: min",
+      "icon: mdi:clock",
+      "entity_id: sensor.xiaomi_cn_blt_3_1ftnm7360c800_pir1_battery_level_p_3_1003",
+      "friendly_name: 小米人体传感器2S  电池 电池电量",
+      "domain: sensor",
+      "device_class: battery",
+      "state_class: measurement",
+      "unit_of_measurement: %"
     ]
   },
   "f4cfb76e557dc1b961361465dc39b51d": {
     "device_id": "f4cfb76e557dc1b961361465dc39b51d",
     "device_name": "小米人体传感器2S",
     "states": [
-      "设备被重置事件状态",
-      "移动检测状态",
+      "事件",
+      "设备被重置",
+      "检测到移动",
       "光照度",
       "无移动状态持续时间",
-      "自定义超时无人移动时间",
-      "电池电量"
+      "光照度 (lx)",
+      "自定义超时无人移动时间（分钟）",
+      "电池电量（%）"
     ],
     "capabilities": [],
     "device_id_clues": [
-      "小米人体传感器2S",
-      "移动检测传感器",
-      "event",
-      "sensor",
-      "xiaomi_cn_blt_3_2gunh8471d911_pir1"
+      "小米人体传感器2S"
     ],
     "usage_habits": [],
     "others": [
-      "HA集成：xiaomi",
-      "设备型号：xiaomi_cn_blt_3_2gunh8471d911_pir1",
-      "事件类型：设备被重置",
-      "设备类型：motion",
-      "所属域：event",
-      "unit_of_measurement: s",
-      "icon: mdi:clock",
-      "单位：lx",
-      "state_class：measurement",
-      "单位：min",
-      "图标：mdi:clock",
-      "设备类型：传感器",
-      "所属域：sensor",
-      "单位：%",
-      "状态类：measurement"
+      "包含实体: event.xiaomi_cn_blt_3_2gunh8471d911_pir1_device_be_reset_e_2_1028（friendly_name: 小米人体传感器2S  移动检测传感器 设备被重置）",
+      "event.xiaomi_cn_blt_3_2gunh8471d911_pir1_device_be_reset_e_2_1028 — domain: event；attributes: event_types 列表包含 '设备被重置'；attributes 包含 event_type（当前为 null）",
+      "包含实体: event.xiaomi_cn_blt_3_2gunh8471d911_pir1_motion_detected_e_2_1008（friendly_name: 小米人体传感器2S  移动检测传感器 检测到移动）",
+      "event.xiaomi_cn_blt_3_2gunh8471d911_pir1_motion_detected_e_2_1008 — domain: event；device_class: motion；event_types 包含 '检测到移动'；event_type: 检测到移动；attributes 包含: 光照度, event_types, event_type, device_class",
+      "包含实体: sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_no_motion_duration_p_2_1024（friendly_name: 小米人体传感器2S  移动检测传感器 无移动状态持续时间）",
+      "sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_no_motion_duration_p_2_1024 — domain: sensor；unit_of_measurement: s；icon: mdi:clock",
+      "包含实体: sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_illumination_p_2_1005（friendly_name: 小米人体传感器2S  移动检测传感器 光照度）",
+      "sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_illumination_p_2_1005 — state_class: measurement；unit_of_measurement: lx；device_class: illuminance",
+      "包含实体: sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_custom_no_motion_time_p_2_1053（friendly_name: 小米人体传感器2S  移动检测传感器 自定义超时无人移动时间）",
+      "sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_custom_no_motion_time_p_2_1053 — domain: sensor；unit_of_measurement: min；icon: mdi:clock",
+      "包含实体: sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_battery_level_p_3_1003（friendly_name: 小米人体传感器2S  电池 电池电量）",
+      "sensor.xiaomi_cn_blt_3_2gunh8471d911_pir1_battery_level_p_3_1003 — domain: sensor；device_class: battery；unit_of_measurement: %；state_class: measurement"
     ]
   },
   "a5dfc87f668ed2c072472576ed40c62e": {
     "device_id": "a5dfc87f668ed2c072472576ed40c62e",
     "device_name": "小米人体传感器2S",
     "states": [
-      "设备被重置事件状态",
-      "检测到移动时间",
+      "设备被重置",
+      "移动检测",
       "光照度",
       "无移动状态持续时间",
-      "自定义超时无人移动时间",
-      "电池电量"
+      "自定义超时无人移动时间（分钟）",
+      "电池电量（百分比）"
     ],
     "capabilities": [],
     "device_id_clues": [
-      "小米人体传感器2S",
-      "移动检测传感器",
-      "event",
-      "sensor",
-      "xiaomi_cn_blt_3_3hvoj9582ea22_pir1"
+      "小米人体传感器2S"
     ],
     "usage_habits": [],
     "others": [
-      "设备型号：xiaomi_cn_blt_3",
-      "HA集成：xiaomi",
-      "供电方式：电池供电",
-      "设备类型：motion、illuminance传感器",
-      "单位：lx、s、min",
-      "icon：mdi:clock",
-      "state_class：measurement",
-      "event_types:['设备被重置','检测到移动']",
-      "last_changed:2025-10-27T09:45:48.471727+00:00",
-      "last_reported:2025-10-27T09:45:48.471727+00:00",
-      "last_updated:2025-10-27T09:45:48.471727+00:00"
+      "包含 event 域的事件实体（event）",
+      "事件实体属性包含: event_types, event_type",
+      "event_types 包含 '设备被重置'",
+      "移动检测事件实体的 device_class: motion",
+      "移动检测事件的 state 字段为事件时间戳（ISO 8601 格式）",
+      "包含 sensor 域的传感器实体（sensor）",
+      "无移动状态持续时间传感器的单位: s，图标: mdi:clock",
+      "光照度传感器的 state_class: measurement，单位: lx，device_class: illuminance",
+      "自定义超时无人移动时间传感器的单位: min，图标: mdi:clock",
+      "电池传感器的 device_class: battery，单位: %，state_class: measurement"
     ]
   },
   "164c1a92b8ce9cda0e2a8c13440b4722": {
     "device_id": "164c1a92b8ce9cda0e2a8c13440b4722",
-    "device_name": "灯泡  灯",
-    "states": [
-      "开关状态",
-      "亮度",
-      "色温",
-      "颜色",
-      "HS颜色",
-      "RGB颜色",
-      "XY颜色"
-    ],
-    "capabilities": [
-      "打开灯光",
-      "关闭灯光",
-      "切换灯光状态",
-      "调节亮度百分比",
-      "调节亮度",
-      "调节色温（开尔文）",
-      "调节色温（Mired）",
-      "设置颜色（RGB格式）",
-      "设置颜色（HS格式）",
-      "设置颜色（XY格式）",
-      "设置颜色名称"
-    ],
-    "device_id_clues": [
-      "light",
-      "yeelink_cn_1162511951_mbulb3_s_2",
-      "灯泡  灯"
-    ],
-    "usage_habits": [],
-    "others": [
-      "supported_features：0",
-      "color_mode：color_temp",
-      "supported_color_modes：['color_temp']"
-    ]
-  },
-  "b75d2b03c9dfaebf1f3b9d24551c5833": {
-    "device_id": "b75d2b03c9dfaebf1f3b9d24551c5833",
-    "device_name": "灯泡  灯",
-    "states": [
-      "开关状态",
-      "亮度",
-      "色温",
-      "颜色"
-    ],
-    "capabilities": [
-      "打开灯光",
-      "关闭灯光",
-      "切换灯光状态",
-      "调节亮度",
-      "调节色温"
-    ],
-    "device_id_clues": [
-      "light",
-      "yeelink_cn_1162512052_mbulb3_s_2",
-      "灯泡  灯",
-      "color_temp"
-    ],
-    "usage_habits": [],
-    "others": [
-      "HA集成：yeelink",
-      "设备型号：mbulb3",
-      "supported_features：0"
-    ]
-  },
-  "c86e3c14d0egbfc02g4cae35662d6944": {
-    "device_id": "c86e3c14d0egbfc02g4cae35662d6944",
     "device_name": "灯泡 灯",
     "states": [
       "开关状态",
       "亮度",
-      "色温",
-      "颜色"
+      "色温 (kelvin)",
+      "色温 (mired)",
+      "色彩模式",
+      "HS 颜色属性",
+      "RGB 颜色属性",
+      "XY 颜色属性"
     ],
     "capabilities": [
-      "打开灯光",
-      "关闭灯光",
-      "切换灯光状态",
+      "开/关 (light.turn_on, light.turn_off, light.toggle)",
+      "切换 (toggle)",
       "调节亮度",
-      "设置色温"
+      "调节色温"
     ],
     "device_id_clues": [
-      "light",
-      "yeelink_cn_1162512153_mbulb3_s_2",
-      "灯泡  灯",
-      "color_temp"
+      "灯泡 灯"
     ],
     "usage_habits": [],
     "others": [
-      "HA集成：yeelink",
-      "supported_features：0"
+      "supported_color_modes: ['color_temp']",
+      "supported_features: 0",
+      "min_color_temp_kelvin: 2700",
+      "max_color_temp_kelvin: 6500",
+      "min_mireds: 153",
+      "max_mireds: 370",
+      "存在属性: brightness, color_temp_kelvin, color_temp, hs_color, rgb_color, xy_color, color_mode"
+    ]
+  },
+  "b75d2b03c9dfaebf1f3b9d24551c5833": {
+    "device_id": "b75d2b03c9dfaebf1f3b9d24551c5833",
+    "device_name": "灯泡",
+    "states": [
+      "开关状态",
+      "亮度",
+      "色温（mired）",
+      "色温（Kelvin）",
+      "色彩模式",
+      "HS色值",
+      "RGB色值",
+      "XY色值"
+    ],
+    "capabilities": [
+      "开/关（turn_on / turn_off）",
+      "切换（toggle）",
+      "设置亮度",
+      "设置色温（mired / Kelvin）"
+    ],
+    "device_id_clues": [
+      "灯泡"
+    ],
+    "usage_habits": [],
+    "others": [
+      "domain: light",
+      "supported_color_modes: ['color_temp']",
+      "color_mode 属性存在",
+      "包含属性: min_color_temp_kelvin, max_color_temp_kelvin, min_mireds, max_mireds",
+      "包含属性: brightness, color_temp, color_temp_kelvin, hs_color, rgb_color, xy_color",
+      "supported_features: 0"
+    ]
+  },
+  "c86e3c14d0egbfc02g4cae35662d6944": {
+    "device_id": "c86e3c14d0egbfc02g4cae35662d6944",
+    "device_name": "灯泡  灯",
+    "states": [
+      "开关状态",
+      "亮度",
+      "色温（开尔文 / 米瑞德）",
+      "色彩模式",
+      "色相/饱和度（HS）",
+      "RGB颜色",
+      "XY颜色"
+    ],
+    "capabilities": [
+      "开 / 关 / 切换",
+      "调节亮度",
+      "调节色温（以开尔文或米瑞德为单位）"
+    ],
+    "device_id_clues": [
+      "灯泡  灯"
+    ],
+    "usage_habits": [],
+    "others": [
+      "min_color_temp_kelvin",
+      "max_color_temp_kelvin",
+      "min_mireds",
+      "max_mireds",
+      "supported_color_modes",
+      "color_mode",
+      "supported_features",
+      "brightness (attribute)",
+      "color_temp_kelvin (attribute)",
+      "color_temp (mired, attribute)",
+      "hs_color (attribute)",
+      "rgb_color (attribute)",
+      "xy_color (attribute)",
+      "last_changed",
+      "last_reported",
+      "last_updated",
+      "context.id"
     ]
   },
   "df406d66e297203b9cbccd7f7b2b0376": {
@@ -518,17 +480,21 @@
       "开关状态"
     ],
     "capabilities": [
-      "打开开关",
-      "关闭开关",
-      "切换开关状态"
+      "turn_on - 打开开关",
+      "turn_off - 关闭开关",
+      "toggle - 切换开/关"
     ],
     "device_id_clues": [
-      "插座  开关 开关",
-      "switch",
-      "cuco_cn_269067598_cp1_on_p_2_1"
+      "插座"
     ],
     "usage_habits": [],
-    "others": []
+    "others": [
+      "entity_id: switch.cuco_cn_269067598_cp1_on_p_2_1",
+      "friendly_name: 插座  开关 开关",
+      "entity_matching_clues: 插座  开关 开关",
+      "device_class: switch",
+      "domain: switch"
+    ]
   },
   "e0517e77f3a8314caeddef8a8c3c1487": {
     "device_id": "e0517e77f3a8314caeddef8a8c3c1487",
@@ -537,15 +503,19 @@
       "开关状态"
     ],
     "capabilities": [
-      "打开开关",
-      "关闭开关",
-      "切换开关状态"
+      "turn_on (开启)",
+      "turn_off (关闭)",
+      "toggle (切换开关)"
     ],
     "device_id_clues": [
-      "switch",
-      "插座  开关 开关"
+      "插座"
     ],
     "usage_habits": [],
-    "others": []
+    "others": [
+      "entity_id: switch.cuco_cn_269067699_cp1_on_p_2_1",
+      "friendly_name: 插座  开关 开关",
+      "entity_matching_clues: 插座  开关 开关",
+      "device_class: switch"
+    ]
   }
 }

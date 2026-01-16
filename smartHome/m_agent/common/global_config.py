@@ -14,8 +14,10 @@ class Global_Config():
 
         # 日志
         self.logger = get_logger("my_test","logs/my_test.log")
-        self.memory_logger= get_logger("memory_update","logs/memory_update.log")
-        self.memory_init_logger= get_logger("memory_init","logs/memory_init.log")
+        # self.memory_logger= get_logger("memory_update","logs/memory_update.log")
+        self.memory_update_logger= setup_dynamic_indent_logger(logger_name="memory_update", log_file_path="logs/memory_update.log")
+        self.memory_init_logger= setup_dynamic_indent_logger(logger_name="memory_init", log_file_path="logs/memory_init.log")
+        # self.memory_init_logger= get_logger("memory_init","logs/memory_init.log")
         # 嵌套agent多层次日志打印
         # self.nested_level=-1
         self.nested_agent_map={}

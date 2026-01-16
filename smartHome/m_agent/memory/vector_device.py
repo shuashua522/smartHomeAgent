@@ -10,7 +10,11 @@ from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunct
 from chromadb.api.models.Collection import Collection
 from langchain.tools import tool
 
+from smartHome.m_agent.agent.langchain_middleware import log_response, log_before, log_before_agent, log_after_agent, \
+    AgentContext
 from smartHome.m_agent.common.get_llm import get_llm
+
+
 
 def get_short_uuid_by_cut(length: int = 12) -> str:
     """
@@ -43,13 +47,15 @@ class TextWithMeta(BaseModel):
 
 class VectorDB():
     def __init__(self):
+        from smartHome.m_agent.common.global_config import GLOBALCONFIG
         # 初始化文本嵌入函数（保持不变）
         self.embedding_func = SentenceTransformerEmbeddingFunction(
             model_name="all-MiniLM-L6-v2"  # 轻量高效，支持中英文
         )
         # 初始化Chroma向量数据库（保持不变，支持持久化）
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, "chroma_text_db")
+        db_dir=f"{GLOBALCONFIG.provider}_{GLOBALCONFIG.model}_chroma_text_db"
+        file_path = os.path.join(current_dir, db_dir)
         self.client = chromadb.PersistentClient(path=file_path)
         # 定义极小值，避免除零错误（保证d>0）
         self.epsilon = 1e-6
@@ -724,12 +730,16 @@ def search_topK_device_by_clues(clues: List[str]):
             找到最符合线索/约束条件的设备，仅返回最佳的设备ID
             """
 
-    agent = create_agent(model=get_llm())
-    result = agent.invoke({
-        "messages": [
+    agent = create_agent(model=get_llm(),
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
+                         )
+    result = agent.invoke(
+        input={"messages": [
             {"role": "system", "content": prompt},
-        ]
-    })
+        ]},
+        context=AgentContext(agent_name="检索__最佳设备阶段")
+    )
     return result["messages"][-1].content
 
 @tool
@@ -770,12 +780,19 @@ def update(device_id:str,old_content:str,new_content:str):
     【检索结果】:{retrieve_result}
     """
 
-    agent = create_agent(model=get_llm(),tools=[tool_update_doc_content],)
-    result = agent.invoke({
-        "messages": [
+    agent = create_agent(model=get_llm(),
+                         tools=[tool_update_doc_content],
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
+                         )
+
+    result = agent.invoke(
+        input={"messages": [
             {"role": "system", "content": prompt},
-        ]
-    })
+        ]},
+        context=AgentContext(agent_name="对话__记忆更新阶段")
+    )
+
     return result["messages"][-1].content
 
 @tool
@@ -799,12 +816,19 @@ def delete(device_id:str,content:str):
         【检索结果】:{retrieve_result}
         """
 
-    agent = create_agent(model=get_llm(), tools=[tool_delete_doc_content], )
-    result = agent.invoke({
-        "messages": [
+    agent = create_agent(model=get_llm(),
+                         tools=[tool_delete_doc_content],
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
+                         )
+
+    result = agent.invoke(
+        input={"messages": [
             {"role": "system", "content": prompt},
-        ]
-    })
+        ]},
+        context=AgentContext(agent_name="检索__删除记忆阶段")
+    )
+
     return result["messages"][-1].content
 
 @tool
