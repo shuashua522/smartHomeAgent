@@ -18,6 +18,7 @@ class Global_Config():
         self.memory_update_logger= setup_dynamic_indent_logger(logger_name="memory_update", log_file_path="logs/memory_update.log")
         self.memory_init_logger= setup_dynamic_indent_logger(logger_name="memory_init", log_file_path="logs/memory_init.log")
         # self.memory_init_logger= get_logger("memory_init","logs/memory_init.log")
+        self.agent_init_dialogue_logger= setup_dynamic_indent_logger(logger_name="agent_init_dialogue", log_file_path="logs/agent_init_dialogue.log")
         # 嵌套agent多层次日志打印
         # self.nested_level=-1
         self.nested_agent_map={}

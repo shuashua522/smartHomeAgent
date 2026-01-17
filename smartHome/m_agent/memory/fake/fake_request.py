@@ -41,6 +41,9 @@ def fake_get_states_by_entity_id(entity_id):
     :param entity_id:
     :return:
     """
+    # 判断entity_id是否为字典
+    if isinstance(entity_id, dict):
+        entity_id = entity_id["entity_id"]
     for entity in entities:
         if entity.get("entity_id") == entity_id:  # 使用get避免KeyError
             return entity

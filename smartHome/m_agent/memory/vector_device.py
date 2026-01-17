@@ -724,10 +724,12 @@ def search_topK_device_by_clues(clues: List[str]):
     :param topk:
     :return:
     """
-    sorted_collections=VECTORDB.search_topK_device_by_clues(clues=clues,topk=3)
+    sorted_collections=VECTORDB.search_topK_device_by_clues(clues=clues,topk=23)
     topk_devices_str=format_collections_to_string(sorted_collections)
-    prompt = """
+    prompt = f"""
             找到最符合线索/约束条件的设备，仅返回最佳的设备ID
+            
+            {topk_devices_str}
             """
 
     agent = create_agent(model=get_llm(),
@@ -845,7 +847,9 @@ def get_device_constraints_individual_match_text(
     ans_str_list = []
     for key, val in search_result.items():
         content_str = ",".join([item["content"] for item in val["unique_matching_documents"]])
-        clue_result_str = f"对于线索/约束：{key},匹配到的内容为:{content_str})"
+        content_str = "None" if (not content_str or content_str is None) else content_str
+        # clue_result_str = f"对于线索/约束：{key},匹配到的内容为:{content_str})"
+        clue_result_str = f"匹配到的内容为:{content_str})"
         ans_str_list.append(clue_result_str)
 
     return "\n".join(ans_str_list)
@@ -1184,3 +1188,8 @@ def old_test_01():
                 print(f"         - 在线状态（states）：{doc_meta.get('states', 'N/A')}")
                 print(f"         - 位置感知能力（capabilities）：{doc_meta.get('capabilities', 'N/A')}")
                 print(f"         - 床边标识（device_id_clues）：{doc_meta.get('device_id_clues', 'N/A')}")
+
+if __name__ == "__main__":
+    clues=['音箱', '播放音乐']
+    sorted_collections = VECTORDB.search_topK_device_by_clues(clues=clues, topk=20)
+    print(sorted_collections)

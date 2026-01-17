@@ -531,12 +531,13 @@ class SmartHomeMemory():
         # 客服：您还有其他智能家居设备的使用习惯吗？
         # 用户：卧室的空调我每天早上7点打开，调26℃，能调风速和定时；厨房的插座是智能的，能远程开关，我一般叫它厨房智能插座。
         # """
-        prompt=f"""
-        【对话】{dialogue_record}
+        prompt=f"""     
         根据当前对话和近期的历史对话，分析是否有新增/过时/修改的事实信息，如果有：
         1. 对话里没有提供设备ID时，调用工具获取到该设备ID
         2. 选择并调用add/delete/update工具对记忆库中的信息进行更新
         3. 更新成功后简单说明本次更新了哪些内容。
+        【对话】
+        {dialogue_record}
         """
         GLOBALCONFIG.nested_logger=GLOBALCONFIG.memory_update_logger
         agent = create_agent(model=get_llm(),
@@ -598,12 +599,56 @@ def get_device_all_entities_capabilities(device_id: str):
         ans_str_list.append(e_str)
     return "\n".join(ans_str_list)
 
+def load_json_and_convert_dialogues():
+    """
+        加载JSON文件，将每段对话转换为一段格式化字符串
+        :param json_file_path: JSON文件的路径（相对路径或绝对路径）
+        :return: 包含每段对话字符串的列表，若执行失败返回空列表
+        """
+    json_file_path="./dialogue_records.json"
+    # 初始化返回结果列表
+    dialogue_str_list = []
+
+    try:
+        # 1. 打开并加载JSON文件（with语句自动关闭文件，更安全）
+        with open(json_file_path, 'r', encoding='utf-8') as f:
+            dialogue_json = json.load(f)
+
+        # 2. 遍历JSON中的每一段对话（外层数组的每个子数组）
+        for single_dialogue in dialogue_json:
+            # 初始化单段对话的拼接字符串
+            dialogue_content = ""
+
+            # 3. 遍历单段对话中的每个角色消息（user/ai）
+            for msg_obj in single_dialogue:
+                # 提取user或ai的内容，避免KeyError
+                if "user" in msg_obj:
+                    dialogue_content += f"用户：{msg_obj['user']}\n"
+                elif "ai" in msg_obj:
+                    dialogue_content += f"AI：{msg_obj['ai']}\n"
+
+            # 4. 去除末尾多余的换行符，添加到结果列表（可选，提升整洁度）
+            dialogue_str_list.append(dialogue_content.rstrip('\n'))
+
+        return dialogue_str_list
+
+    except FileNotFoundError:
+        print(f"错误：未找到指定的JSON文件 -> {json_file_path}")
+        return []
+    except json.JSONDecodeError:
+        print("错误：JSON文件格式无效，无法解析")
+        return []
+    except Exception as e:
+        print(f"错误：执行过程中出现未知异常 -> {str(e)}")
+        return []
+
 if __name__ == "__main__":
     # SMARTHOMEMEMORY.init_memory_for_entity()
-    SMARTHOMEMEMORY.init_memory_for_device()
-    # dialogue_record="""
-    # ai：请问哪一个是客厅灯?设备ID：164c1a92b8ce9cda0e2a8c13440b4722;设备ID：b75d2b03c9dfaebf1f3b9d24551c5833;设备ID：c86e3c14d0egbfc02g4cae35662d6944
-    # 用户: 第三个
-    # """
-    # SMARTHOMEMEMORY.extract_and_update(dialogue_record=dialogue_record)
+    # SMARTHOMEMEMORY.init_memory_for_device()
+
+    dialogue_str_list=load_json_and_convert_dialogues()
+    for idx, dialogue_str in enumerate(dialogue_str_list, start=1):
+        if idx < 7:
+            continue
+        SMARTHOMEMEMORY.extract_and_update(dialogue_record=dialogue_str)
     pass

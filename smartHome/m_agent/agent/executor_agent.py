@@ -110,28 +110,12 @@ def start_device_persistent_monitoring(device_id: str,when_true:str,then_do:str)
             【持久化任务】：when_true-{when_true} then_do{then_do}
             1. 一个设备有多个实体，你可以首先调用工具查看设备下所有实体各自能得到什么状态类型
             2. 选择实体后再调用工具获取该实体的json数据，观察其结构组成
-            3. 编写代码，在代码中可以直接调用函数fake_get_states_by_entity_id()，我会确保其在运行时存在
+            3. 编写代码，在代码中可以直接调用函数tool_get_states_by_entity_id()，我会确保其在运行时存在
             4. 调用@tool PythonInterpreterTool 运行一次代码，确保编写执行无误
             5. 调用工具持久化监控
             """
     agent = create_agent(model=get_llm(),
-                         tools=[get_device_all_entities_capabilities, tool_get_states_by_entity_id,PythonInterpreterTool,NotifyOnConditionTool], )
-    result = agent.invoke({
-        "messages": [
-            {"role": "system", "content": prompt},
-        ]
-    })
-    return result["messages"][-1].content
-
-if __name__ == "__main__":
-    planning="""关闭设备c86e3c14d0egbfc02g4cae35662d6944（灯泡 灯）；"""
-    prompt = f"""
-            【计划表】:{planning}
-            根据计划表，调用不同的工具来完成计划表中的每一个任务，你不需要修正计划表，只需要如实记录各任务执行情况。
-            - 如果任务失败，需要简练记录失败原因
-            """
-    agent = create_agent(model=get_llm(),
-                         tools=[get_device_current_status, execute_device_action, start_device_persistent_monitoring],
+                         tools=[get_device_all_entities_capabilities, tool_get_states_by_entity_id,PythonInterpreterTool,NotifyOnConditionTool],
                          middleware=[log_before, log_response, log_before_agent, log_after_agent],
                          context_schema=AgentContext
                          )
@@ -139,6 +123,35 @@ if __name__ == "__main__":
         input={"messages": [
             {"role": "system", "content": prompt},
         ]},
-        context=AgentContext(agent_name="executor_设备持续监控阶段")
+        context=AgentContext(agent_name="executor_设备持久监控阶段")
     )
+    return result["messages"][-1].content
+
+if __name__ == "__main__":
+
+    device_id="cf03cb835279ea4876ab6ee202aa9832"
+    when_true="当门未关闭时"
+    then_do="通知我"
+    prompt = f"""
+                【设备ID】：{device_id}
+                【持久化任务】：when_true-{when_true} then_do{then_do}
+                1. 一个设备有多个实体，你可以首先调用工具查看设备下所有实体各自能得到什么状态类型
+                2. 选择实体后再调用工具获取该实体的json数据，观察其结构组成
+                3. 编写代码，在代码中可以直接调用函数tool_get_states_by_entity_id()，我会确保其在运行时存在
+                4. 调用@tool PythonInterpreterTool 运行一次代码，确保编写执行无误
+                5. 调用工具持久化监控
+                """
+    agent = create_agent(model=get_llm(),
+                         tools=[get_device_all_entities_capabilities, tool_get_states_by_entity_id,
+                                PythonInterpreterTool, NotifyOnConditionTool],
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
+                         )
+    result = agent.invoke(
+        input={"messages": [
+            {"role": "system", "content": prompt},
+        ]},
+        context=AgentContext(agent_name="executor_设备持久监控阶段")
+    )
+    ans=result["messages"][-1].content
     pass

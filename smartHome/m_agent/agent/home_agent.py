@@ -10,6 +10,7 @@ from typing_extensions import TypedDict, Annotated
 import operator
 
 from smartHome.m_agent.agent.executor_agent import executor_planning
+from smartHome.m_agent.agent.human_interaction import ask_human
 from smartHome.m_agent.agent.langchain_middleware import AgentContext, log_before, log_response, log_before_agent, \
     log_after_agent
 from smartHome.m_agent.common.get_llm import get_llm
@@ -126,6 +127,7 @@ def node_filter_1(state:SmartHomeAgentState)-> Command[Literal["filter_2_node", 
     system_prompt = f"""
         根据所有的设备简介（设备能做什么，能从设备获取到什么），选出可能能用于完成此次任务的设备ID列表，并简单说明理由.
         - 如果【任务】里的设备有限定条件，比如床边的灯、卧室的空调等，你不需要在意限定条件，只需要根据设备能做什么、能获取什么来筛选可能的设备，之后会根据限定条件进一步筛选
+        - 如果理由是可能性的，那么说明理由应该包含"可能"，否则容易误导。比如插座，可能连接着服务器。
         """
     agent = create_agent(model=get_llm(),
                          tools=[get_device_all_states, get_device_all_capabilities],
@@ -140,11 +142,6 @@ def node_filter_1(state:SmartHomeAgentState)-> Command[Literal["filter_2_node", 
         ]},
         context=AgentContext(agent_name="过滤一")
     )
-    # # 日志打印
-    # msg_content = "\n" + "\n".join(map(repr, result["messages"]))
-    # GLOBALCONFIG.logger.info("================"+"过滤一")
-    # GLOBALCONFIG.logger.info(msg_content)
-    # GLOBALCONFIG.logger.info("\n")
 
     deviceInfoList = result["structured_response"]
     # 无缩进（紧凑格式，适合传输/存储）
@@ -178,14 +175,17 @@ def node_filter_2(state:SmartHomeAgentState)-> Command[Literal["planner_node", E
     prompt=f"""
     【任务】：{state["command"]}
     【候选设备集】：{state["first_filter_devices"]}
+    - 候选设备的理由仅供参考，并不能说明该设备就一定满足条件。
     如果用户指令包含约束条件，根据约束条件（设备环境信息、用户对设备的称呼等），从候选设备里挑出满足的设备。
     - 比如用户要打开客厅餐桌的灯和卧室床边的灯，候选设备集里有两盏灯（灯1和灯2），那么需要调用tool获取这两盏灯各自与[[客厅，餐桌],[卧室，床边]]的相似记忆内容。
     - 然后检查是否有说明这两盏灯满足条件，如果都不满足，那么不应该选用。比如灯1的检索到的记忆既没说明其在卧室，也没说明其在客厅，那么不该选出灯1
     最后保留设备ID，和简单说明理由。如果没有任何设备满足约束条件，说明原因。
+    
+    - 如果检索出的信息不足以确定设备，可以调用工具向用户提问获取缺失信息。但你不应该过于依赖此工具，尽可能依靠自己完成任务。
     """
     agent = create_agent(model=get_llm(),
-                         tools=[get_device_constraints_individual_match_text],
-                         # response_format=DeviceIdList,
+                         tools=[get_device_constraints_individual_match_text,ask_human],
+                         response_format=DeviceIdList,
                          middleware=[log_before, log_response, log_before_agent, log_after_agent],
                          context_schema=AgentContext
                          )
@@ -195,11 +195,6 @@ def node_filter_2(state:SmartHomeAgentState)-> Command[Literal["planner_node", E
         ]},
         context = AgentContext(agent_name="过滤二")
     )
-    # # 日志打印
-    # msg_content = "\n" + "\n".join(map(repr, result["messages"]))
-    # GLOBALCONFIG.logger.info("================" + "过滤二")
-    # GLOBALCONFIG.logger.info(msg_content)
-    # GLOBALCONFIG.logger.info("\n")
 
     # deviceInfoList = result["structured_response"]
     # # 无缩进（紧凑格式，适合传输/存储）
@@ -225,6 +220,7 @@ def node_planner(state:SmartHomeAgentState)-> Command[Literal["deliver_node", EN
     【任务】：{state["command"]}
     【候选设备集】：{state["second_filter_devices"]}
     根据任务及设备能力和状态类型、使用习惯，规划出应该让每个设备做什么
+    - 除非用户明确包含持久化监控某个设备，否则计划中不能出现持久化操作
     """
     # todo 改成从设备列表获取 设备能力和获取状态
     agent = create_agent(
@@ -277,8 +273,9 @@ agent_builder.add_edge(START, "filter_1_node")
 
 agent = agent_builder.compile()
 
+GLOBALCONFIG.nested_logger=GLOBALCONFIG.agent_init_dialogue_logger
 # Test with an urgent billing issue
-task="将客厅灯调暖一点"
+task="有电话来了"
 initial_state = {
     "command": task,
     "messages": [HumanMessage(content=task)]

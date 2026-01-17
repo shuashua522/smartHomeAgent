@@ -13,10 +13,10 @@ def run_code(code_define: str, code_run: str):
     # add indentation
     code_define = "\n    ".join(code_define.split("\n"))
     code_run = code_run.strip("\n")
+
     wrapper_fn = """
 def wrapper():
-    from smartHome.m_agent.memory.fake.fake_do_service import fake_execute_domain_service_by_entity_id
-    from smartHome.m_agent.memory.fake.fake_request import fake_get_states_by_entity_id, fake_get_services_by_domain
+    from smartHome.m_agent.memory.fake.fake_request import fake_get_states_by_entity_id as tool_get_states_by_entity_id
     %s
 
     return %s
@@ -72,3 +72,20 @@ def NotifyOnConditionTool(function_name,notify_when,condition_description,action
     action_description (str): what to do when the condition is met
     """
     return f"You will be notified when the condition occurs."
+
+if __name__ == "__main__":
+    from smartHome.m_agent.memory.fake.fake_request import fake_get_states_by_entity_id as tool_get_states_by_entity_id
+
+
+    def check_door_not_closed():
+        # 获取实体状态
+        data = tool_get_states_by_entity_id(
+            {"entity_id": "binary_sensor.isa_cn_blt_3_1md0u6qht0k00_dw2hl_contact_state_p_2_2"})
+        state = data.get("state") if isinstance(data, dict) else None
+        # 门未关闭时（open）Home Assistant 的二进制传感器通常为 'on'
+        return state == "on"
+
+
+    # 运行一次检查并返回结果
+
+    check_door_not_closed()
