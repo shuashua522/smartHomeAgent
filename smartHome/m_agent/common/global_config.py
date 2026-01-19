@@ -26,6 +26,11 @@ class Global_Config():
 
         # env取值：dev，test，prod
         self.env="test"
+
+        # homeassitant 配置
+        self.homeassitant_api_isopen=False
+        self.homeassitant_token = self.configparser.get("homeassitant", 'homeassitant_token')
+        self.homeassitant_server = self.configparser.get("homeassitant", 'homeassitant_server_ip_port')
     def load_configparser(self):
         # 获取当前文件(global_config.py)的绝对路径
         current_file_path = os.path.abspath(__file__)

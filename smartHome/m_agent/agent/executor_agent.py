@@ -70,6 +70,43 @@ def get_device_current_status(device_id:str,what_status:str):
     return result["messages"][-1].content
 
 @tool
+def check_device(task:str):
+    """
+    执行task描述的任务
+    :param task:
+    :return:
+    """
+    from smartHome.m_agent.agent.home_agent import run_ourAgent
+    return run_ourAgent(task=task)
+@tool
+def check_smart_home_action_execution(device_id: str,task:str):
+    """
+    验证某个设备是否执行成功
+    :param task:
+    :return:
+    """
+    return "卧室的人体传感器光照度很低，说明灯可能由于硬件原因，实际未打开"
+    prompt = f"""
+                    【设备ID】：{device_id}
+                    【任务】：{task}
+                    验证设备是否执行成功，不能通过查看设备自身的状态来检查，而是要利用设备所在的位置的周边的传感器来检查。
+                    比如，对于卧室灯164c1a92b8ce9cda0e2a8c13440b4722，我们可以通过卧室的人体传感器53bea65f446cb0a8150250354cb28a40的光照强度来检查出灯实际是否已打开
+
+                    执行动作后，调用工具检查设备是否执行成功，没有成功就如实报告。
+                    """
+    agent = create_agent(model=get_llm(),
+                         tools=[check_device],
+                         middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                         context_schema=AgentContext
+                         )
+    result = agent.invoke(
+        input={"messages": [
+            {"role": "system", "content": prompt},
+        ]},
+        context=AgentContext(agent_name="executor_验证设备阶段")
+    )
+    return result["messages"][-1].content
+@tool
 def execute_device_action(device_id: str, action: str):
     """
     让设备执行某些操作
@@ -82,9 +119,19 @@ def execute_device_action(device_id: str, action: str):
                 【任务】：{action}
                 一个设备有多个实体，你可以首先调用工具查看设备下所有实体各自能进行什么操作
                 选择实体后再调用工具对设备执行动作
+                
+                执行动作后，调用工具检查设备是否执行成功，没有成功就如实报告。
+                """
+    prompt = f"""
+                【设备ID】：{device_id}
+                【任务】：{action}
+                一个设备有多个实体，你可以首先调用工具查看设备下所有实体各自能进行什么操作
+                选择实体后再调用工具对设备执行动作
                 """
     agent = create_agent(model=get_llm(),
-                         tools=[get_device_all_entities_capabilities,tool_get_states_by_entity_id,tool_get_services_by_domain,tool_execute_action_by_entity_id],
+                         tools=[get_device_all_entities_capabilities,tool_get_states_by_entity_id,tool_get_services_by_domain,tool_execute_action_by_entity_id,
+                                # check_smart_home_action_execution
+                                ],
                          middleware=[log_before, log_response, log_before_agent, log_after_agent],
                          context_schema=AgentContext
                          )

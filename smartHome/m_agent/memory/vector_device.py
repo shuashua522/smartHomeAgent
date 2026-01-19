@@ -47,6 +47,11 @@ class TextWithMeta(BaseModel):
 
 class VectorDB():
     def __init__(self):
+        # import os
+        #
+        # os.environ["CHROMA_LOG_LEVEL"] = "DEBUG"  # 开启 DEBUG 级别日志
+        # os.environ["CHROMA_VERBOSE"] = "1"
+
         from smartHome.m_agent.common.global_config import GLOBALCONFIG
         # 初始化文本嵌入函数（保持不变）
         self.embedding_func = SentenceTransformerEmbeddingFunction(
@@ -367,6 +372,42 @@ class VectorDB():
 
         # 步骤6：返回格式化的成功结果
         return f"删除成功：集合「{collection_name}」中的文档「{doc_id}」已被完整移除"
+
+    def search_device_topk_content_by_clues(self, query: str, top_k: int, collection_name: str) -> list[str]:
+        """
+        从数据库中检索出与query最相似的topk个记忆，仅返回文档内容列表
+        Args:
+            query: 检索查询语句
+            top_k: 返回最相似的记录数量
+            collection_name: 集合名称，默认"user"
+        Returns:
+            匹配到的文档内容列表（str列表），无匹配结果返回空列表
+        """
+        # 步骤1：获取目标集合
+        collection = self.get_or_create_collection(collection_name)
+
+        # 步骤2：参数合法性校验
+        if not query.strip():
+            raise ValueError("检索查询语句query不能为空，请输入有效内容")
+        if not isinstance(top_k, int) or top_k <= 0:
+            raise ValueError("top_k必须为正整数，请传入大于0的整数")
+
+        # 步骤3：执行向量检索
+        search_results = collection.query(
+            query_texts=[query],
+            n_results=top_k,
+            include=["documents"]  # 仅按需获取documents，提升效率
+        )
+
+        # 步骤4：提取并返回documents列表（核心修改：只保留文本内容列表）
+        # 提取单个query的结果，直接返回扁平的documents列表
+        documents_list = search_results["documents"][0]
+
+        # 步骤5：打印检索提示（可选，方便调试）
+        print(f"🔍 检索完成，找到与「{query[:30]}...」最相似的 {len(documents_list)} 条记录")
+
+        # 步骤6：仅返回documents列表
+        return documents_list
 
     def get_device_multi_constraints_individual_match_scores(
             self,
@@ -833,26 +874,48 @@ def delete(device_id:str,content:str):
 
     return result["messages"][-1].content
 
-@tool
+# @tool
 def get_device_constraints_individual_match_text(
     device_id: str,
-    multi_clues: List[List[str]]
+    multi_clues: List[str]
 )->str:
     """
-    返回记忆库中该设备对多个约束条件各自对应的匹配文本。
+    返回记忆库中该设备对多个约束条件的满足情况分析.
     :param device_id: 智能家居设备的唯一标识ID（如Home Assistant设备ID）。
-    :param multi_clues: 设备匹配的约束条件/定位线索集合，外层列表包含多个独立约束条件，每个约束条件对应一个内部字符串列表（存储该约束的具体线索内容）。
     """
-    search_result=VECTORDB.get_device_multi_constraints_individual_match_scores(device_id=device_id,multi_clues=multi_clues)
-    ans_str_list = []
-    for key, val in search_result.items():
-        content_str = ",".join([item["content"] for item in val["unique_matching_documents"]])
-        content_str = "None" if (not content_str or content_str is None) else content_str
-        # clue_result_str = f"对于线索/约束：{key},匹配到的内容为:{content_str})"
-        clue_result_str = f"匹配到的内容为:{content_str})"
-        ans_str_list.append(clue_result_str)
+    try:
+        unique_content_set = set()
+        for clue in multi_clues:
+            content_list = VECTORDB.search_device_topk_content_by_clues(query=clue, top_k=23,collection_name=device_id)
+            for content in content_list:
+                if content:  # 可选：过滤空字符串，避免集合中存入无效空值
+                    unique_content_set.add(content)
 
-    return "\n".join(ans_str_list)
+        topk_devices_str = ",".join(unique_content_set)
+        clues_str=",".join(multi_clues)
+        prompt = f"""
+                    根据该设备的事实信息，谨慎分析其对各约束条件的满足情况。简单干练的说明即可。
+                    【查询的约束条件】：{clues_str}
+                    【设备的事实信息】：{topk_devices_str}
+                    """
+
+        agent = create_agent(model=get_llm(),
+                             middleware=[log_before, log_response, log_before_agent, log_after_agent],
+                             context_schema=AgentContext
+                             )
+        result = agent.invoke(
+            input={"messages": [
+                {"role": "system", "content": prompt},
+            ]},
+            context=AgentContext(agent_name="检索__设备与约束匹配阶段")
+        )
+        return result["messages"][-1].content
+    except Exception as e:
+        # 打印错误详情（推荐记录到日志文件，而非直接打印）
+        from smartHome.m_agent.common.global_config import GLOBALCONFIG
+        GLOBALCONFIG.print_nested_log(f"捕获到异常，错误描述：{e}")
+        GLOBALCONFIG.print_nested_log(f"异常类型：{type(e).__name__}")  # 打印具体异常类型（如AttributeError、TypeError等）
+        return "本次执行可能出了点问题，你可以再试一次"
 
 @tool
 def get_device_all_states()->str:
@@ -1044,38 +1107,6 @@ def test_device_multi_constraints_match_pydantic():
     print("🎉 （适配Pydantic版）设备多约束匹配功能测试完成")
     print("=" * 80)
 
-# ---------------------- 执行测试 ----------------------
-if __name__ == "__main__":
-    # test_device_multi_constraints_match_pydantic()
-    # VECTORDB.print_all_collections_content()
-    device_ids=["164c1a92b8ce9cda0e2a8c13440b4722"]
-    all_collections = VECTORDB.client.list_collections()
-    ans_str_list = []
-    for collection in all_collections:
-        device_id = collection.name
-        if device_id not in device_ids:
-            continue
-        ans_str_list.append(VECTORDB.get_device_states_combined(device_id=device_id))
-    print("\n".join(ans_str_list))
-    # result=VECTORDB.search_topK_device_by_clues(clues=["灯泡","调色温"],topk=3)
-    # print(format_collections_to_string(result))
-    """
-    ⚠️  设备ID「28adb3b1-b520-4c5b-8b13-8b93bdfa5d5c」对应的集合不存在
-⚠️  设备ID「7ff9f9cc-c531-4d3f-939e-b95386d6f7b2」对应的集合不存在
-⚠️  设备ID「9bde1df2-dfcb-4966-a6a3-3026fa17fd77」对应的集合不存在
-    """
-
-    # text=TextWithMeta(
-    #     content="df406d66e297203b9cbccd7f7b2b0376",
-    #     device_id_clues=True
-    # )
-    # VECTORDB.add_text_to_vector_db(text_data=text,collection=VECTORDB.get_or_create_collection("df406d66e297203b9cbccd7f7b2b0376"))
-    # all_collections = VECTORDB.client.list_collections()
-    # ans_str_list = []
-    # for collection in all_collections:
-    #     device_id = collection.name
-    #     ans_str_list.append(VECTORDB.get_device_states_combined(device_id=device_id))
-    # print("\n".join(ans_str_list))
 
 
 
@@ -1190,6 +1221,8 @@ def old_test_01():
                 print(f"         - 床边标识（device_id_clues）：{doc_meta.get('device_id_clues', 'N/A')}")
 
 if __name__ == "__main__":
-    clues=['音箱', '播放音乐']
-    sorted_collections = VECTORDB.search_topK_device_by_clues(clues=clues, topk=20)
-    print(sorted_collections)
+    # clues=['音箱', '播放音乐']
+    # sorted_collections = VECTORDB.search_topK_device_by_clues(clues=clues, topk=20)
+    # print(sorted_collections)
+    print(get_device_constraints_individual_match_text(device_id='c86e3c14d0egbfc02g4cae35662d6944',
+                                                       multi_clues=['客厅', '客厅灯', '客厅的灯']))

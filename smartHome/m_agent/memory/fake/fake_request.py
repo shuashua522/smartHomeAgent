@@ -12,10 +12,14 @@ parent_dir = os.path.dirname(current_dir)
 entities_path = os.path.join(parent_dir, "copied_data","entities.json")
 services_path = os.path.join(parent_dir, "copied_data","domains_services.json")
 
-# 读取 JSON 文件
-entities = json.load(open(entities_path, "r", encoding="utf-8"))
-services = json.load(open(services_path, "r", encoding="utf-8"))
-
+class homeassitant_data():
+    def __init__(self):
+        # 读取 JSON 文件
+        self.entities = json.load(open(entities_path, "r", encoding="utf-8"))
+        self.services = json.load(open(services_path, "r", encoding="utf-8"))
+    def init_entities(self):
+        self.entities = json.load(open(entities_path, "r", encoding="utf-8"))
+HOMEASSITANT_DATA=homeassitant_data()
 
 def fake_get_services_by_domain(domain:str):
     """
@@ -23,7 +27,7 @@ def fake_get_services_by_domain(domain:str):
     :param domain:
     :return:
     """
-    for service in services:
+    for service in HOMEASSITANT_DATA.services:
         if domain == service["domain"]:
             return service
     return None
@@ -33,7 +37,7 @@ def fake_get_all_entities():
     获取所有实体
     :return:
     """
-    return entities
+    return HOMEASSITANT_DATA.entities
 
 def fake_get_states_by_entity_id(entity_id):
     """
@@ -44,7 +48,7 @@ def fake_get_states_by_entity_id(entity_id):
     # 判断entity_id是否为字典
     if isinstance(entity_id, dict):
         entity_id = entity_id["entity_id"]
-    for entity in entities:
+    for entity in HOMEASSITANT_DATA.entities:
         if entity.get("entity_id") == entity_id:  # 使用get避免KeyError
             return entity
     return None

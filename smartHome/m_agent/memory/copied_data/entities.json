@@ -77,7 +77,7 @@
 		"effect": "mode 1",
 		"color_mode": "brightness",
 		"brightness": 3,
-		"friendly_name": "卧室的米家智能台灯Lite  灯",
+		"friendly_name": "米家智能台灯Lite  灯",
 		"supported_features": 4
 	},
     "last_changed": "2025-10-27T11:25:38.188829+00:00",
@@ -241,7 +241,7 @@
 		"effect": "mode 1",
 		"color_mode": "brightness",
 		"brightness": 3,
-		"friendly_name": "卧室的米家智能台灯Lite  灯",
+		"friendly_name": "米家智能台灯Lite  灯",
 		"supported_features": 4
 	},
     "last_changed": "2025-10-27T11:25:38.188829+00:00",
@@ -387,7 +387,7 @@
   },
   {
     "entity_id": "sensor.xiaomi_cn_blt_3_1ftnm7360c800_pir1_illumination_p_2_1005",
-    "state": "0.0",
+    "state": "15.0",
     "attributes": {
       "state_class": "measurement",
       "unit_of_measurement": "lx",
@@ -459,7 +459,7 @@
   },
   {
     "entity_id": "event.xiaomi_cn_blt_3_2gunh8471d911_pir1_motion_detected_e_2_1008",
-    "state": "2025-11-04T06:55:40.098+00:00",
+    "state": "2025-11-05T06:55:40.098+00:00",
     "attributes": {
       "event_types": [
         "检测到移动"
@@ -469,9 +469,9 @@
       "device_class": "motion",
       "friendly_name": "小米人体传感器2S  移动检测传感器 检测到移动"
     },
-    "last_changed": "2025-11-04T06:55:40.098297+00:00",
-    "last_reported": "2025-11-04T06:55:40.098297+00:00",
-    "last_updated": "2025-11-04T06:55:40.098297+00:00",
+    "last_changed": "2025-11-05T06:55:40.098297+00:00",
+    "last_reported": "2025-11-05T06:55:40.098297+00:00",
+    "last_updated": "2025-11-05T06:55:40.098297+00:00",
     "context": {
       "id": "01K96TCQJ2BYMKCJXNFYSX9TEC",
       "parent_id": null,
